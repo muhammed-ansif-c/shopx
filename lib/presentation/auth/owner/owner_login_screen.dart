@@ -477,12 +477,13 @@ class OwnerLoginScreen extends HookConsumerWidget {
 
                       // ✅ 2. Call login + sendOTP first
                       Future.microtask(() async {
-                         // ⭐ SHOW LOADING BEFORE VALIDATION
-  showDialog(
-    context: context,
-    barrierDismissible: false,
-    builder: (_) => const Center(child: CircularProgressIndicator()),
-  );
+                        // ⭐ SHOW LOADING BEFORE VALIDATION
+                        showDialog(
+                          context: context,
+                          barrierDismissible: false,
+                          builder: (_) =>
+                              const Center(child: CircularProgressIndicator()),
+                        );
 
                         try {
                           // Step 1: Login owner
@@ -498,9 +499,8 @@ class OwnerLoginScreen extends HookConsumerWidget {
                               .read(authNotifierProvider.notifier)
                               .sendOTP(selectedOtpMethod.value!.toLowerCase());
 
-                              
-    // ⭐ CLOSE LOADING
-    if (context.mounted) Navigator.of(context).pop();
+                          // ⭐ CLOSE LOADING
+                          if (context.mounted) Navigator.of(context).pop();
 
                           if (!context.mounted) return;
 
@@ -529,9 +529,9 @@ class OwnerLoginScreen extends HookConsumerWidget {
                             ),
                           );
                         } catch (e) {
-                           // ⭐ CLOSE LOADING ON ERROR
-    if (context.mounted) Navigator.of(context).pop();
-    
+                          // ⭐ CLOSE LOADING ON ERROR
+                          if (context.mounted) Navigator.of(context).pop();
+
                           // Stop everything
                           otpTimer.value?.cancel();
                           isTimerRunning.value = false;
@@ -583,10 +583,30 @@ class OwnerLoginScreen extends HookConsumerWidget {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(content: Text("Login successful!")),
                           );
+
+                          // } catch (e) {
+                          //   ScaffoldMessenger.of(context).showSnackBar(
+                          //     SnackBar(
+                          //       content: Text("OTP verification failed: $e"),
+                          //     ),
+                          //   );
+                          // }
                         } catch (e) {
+                          // ❌ DO NOT navigate
+                          // ❌ DO NOT show raw error
+
+                          // Reset OTP fields (optional but professional)
+                          otp1Controller.clear();
+                          otp2Controller.clear();
+                          otp3Controller.clear();
+                          otp4Controller.clear();
+                          FocusScope.of(context).requestFocus(focus1);
+
+                          // Show clean user-friendly message
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text("OTP verification failed: $e"),
+                            const SnackBar(
+                              content: Text("Incorrect OTP. Please try again."),
+                              backgroundColor: Colors.red,
                             ),
                           );
                         }
