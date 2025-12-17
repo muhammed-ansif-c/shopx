@@ -10,8 +10,8 @@ baseUrl: "https://aba65707ae3f.ngrok-free.app/api/",
 
     connectTimeout: Duration(seconds: 20),
     receiveTimeout: Duration(seconds: 20),
-    headers: {"Content-Type": "application/json",
-          "ngrok-skip-browser-warning": "true", 
+    headers: {"Content-Type": "application/json"
+          // "ngrok-skip-browser-warning": "true", 
     },
   ));
 
