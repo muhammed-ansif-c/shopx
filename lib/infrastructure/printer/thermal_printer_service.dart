@@ -3,6 +3,7 @@
 
 // lib/infrastructure/printer/thermal_printer_service.dart
 
+import 'dart:convert';
 import 'dart:typed_data';
 import 'package:esc_pos_utils_plus/esc_pos_utils_plus.dart';
 import 'package:flutter/material.dart';
@@ -52,15 +53,29 @@ bytes += gen.setGlobalCodeTable('CP864');
     // --------------------
     // HEADER (CENTERED)
     // --------------------
-    bytes += gen.text(
-      r.companyNameEn,
-      styles: PosStyles(bold: true, align: PosAlign.center),
-    );
+    // bytes += gen.text(
+    //   r.companyNameEn,
+    //   styles: PosStyles(bold: true, align: PosAlign.center),
+    // );
 
-    bytes += gen.text(
-      r.companyNameAr,
-      styles: PosStyles(align: PosAlign.center),
-    );
+    // bytes += gen.text(
+    //   r.companyNameAr,
+    //   styles: PosStyles(align: PosAlign.center),
+    // );
+
+    // English company name (SAFE)
+bytes += gen.text(
+  r.companyNameEn,
+  styles: PosStyles(bold: true, align: PosAlign.center),
+);
+
+// Arabic company name (🔥 MUST BE ENCODED)
+bytes += gen.textEncoded(
+  latin1.encode(r.companyNameAr),
+  styles: PosStyles(align: PosAlign.center),
+);
+
+
 
     bytes += gen.text(
       "${r.city}, ${r.country}",
@@ -159,10 +174,17 @@ bytes += gen.setGlobalCodeTable('CP864');
       styles: PosStyles(align: PosAlign.center, bold: true),
     );
 
-    bytes += gen.text(
-      "شكراً لكم",
-      styles: PosStyles(align: PosAlign.center),
-    );
+    // bytes += gen.text(
+    //   "شكراً لكم",
+    //   styles: PosStyles(align: PosAlign.center),
+    // );
+  
+  bytes += gen.textEncoded(
+  latin1.encode("شكراً لكم"),
+  styles: PosStyles(align: PosAlign.center),
+);
+
+
 
     bytes += gen.cut();
 
