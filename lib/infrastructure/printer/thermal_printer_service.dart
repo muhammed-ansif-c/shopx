@@ -45,6 +45,9 @@ class ThermalPrinterService {
     final gen = Generator(PaperSize.mm58, profile);
 
     List<int> bytes = [];
+    // 🔥 ADD THIS LINE (CRITICAL)
+bytes += gen.setGlobalCodeTable('CP864');
+
 
     // --------------------
     // HEADER (CENTERED)
@@ -104,7 +107,13 @@ class ThermalPrinterService {
     // --------------------
     for (final item in r.items) {
       bytes += gen.row([
-        PosColumn(text: item.nameEn, width: 6),
+        // PosColumn(text: item.nameEn, width: 6),
+        PosColumn(
+  text: item.nameEn.length > 12
+      ? item.nameEn.substring(0, 12)
+      : item.nameEn,
+  width: 6,
+),
         PosColumn(text: item.quantity.toString(), width: 2, styles: PosStyles(align: PosAlign.right)),
         PosColumn(text: item.total.toStringAsFixed(2), width: 4, styles: PosStyles(align: PosAlign.right)),
       ]);
