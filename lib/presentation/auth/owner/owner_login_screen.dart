@@ -648,13 +648,15 @@ if (!hasInternet) {
             return;
           }
 
-          // ✅ LOGIN SUCCESS
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (_) => const AdminDashboard(),
-            ),
-          );
+        // ✅ LOGIN SUCCESS (CLEAR BACK STACK)
+Navigator.pushAndRemoveUntil(
+  context,
+  MaterialPageRoute(
+    builder: (_) => const AdminDashboard(),
+  ),
+  (route) => false, // 🔥 removes ALL previous routes
+);
+
 
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text("Login successful!")),
