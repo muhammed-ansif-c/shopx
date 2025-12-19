@@ -1,6 +1,6 @@
 import 'dart:async';
+import 'dart:io';
 import 'dart:ui'; // Required for ImageFilter
-import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -57,7 +57,18 @@ class OwnerLoginScreen extends HookConsumerWidget {
     //   otpTimer.value?.cancel();
     //   isTimerRunning.value = false;
     //   isOtpSent.value = false;
-    // }
+    // } 
+
+    
+Future<bool> hasRealInternet() async {
+  try {
+    final result = await InternetAddress.lookup('google.com')
+        .timeout(const Duration(seconds: 3));
+    return result.isNotEmpty && result[0].rawAddress.isNotEmpty;
+  } catch (_) {
+    return false;
+  }
+}
 
     // 3. Theme Colors
     const primaryBlue = Color(0xFF1976D2);
@@ -482,17 +493,18 @@ SizedBox(
       // =========================
       // CHECK INTERNET FIRST (FOR BOTH STATES)
       // =========================
-      final connectivityResult = await Connectivity().checkConnectivity();
-      if (connectivityResult == ConnectivityResult.none) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              "No internet connection. Please switch on mobile data or Wi-Fi.",
-            ),
-          ),
-        );
-        return; // ❌ STOP HERE
-      }
+     final hasInternet = await hasRealInternet();
+if (!hasInternet) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    const SnackBar(
+      content: Text(
+        "No internet connection. Please switch on mobile data or Wi-Fi.",
+      ),
+    ),
+  );
+  return; // ❌ STOP HERE — OTP WILL NOT APPEAR
+}
+
 
       // =========================
       // STATE 1: GET OTP
