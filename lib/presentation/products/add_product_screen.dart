@@ -18,6 +18,10 @@ class AddProductScreen extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+
+
+
+    
     // Hooks for TextFields
    final nameController = useTextEditingController(
   text: productToEdit?.name ?? "",
@@ -82,6 +86,20 @@ final pickedImages = useState<List<Uint8List>>([]);
         print("Picked ${pickedImages.value.length} images");
       }
     }
+
+
+    useEffect(() {
+  if (productToEdit != null) {
+    nameController.text = productToEdit!.name;
+    priceController.text = productToEdit!.price.toString();
+    categoryController.text = productToEdit!.category;
+    codeController.text = productToEdit!.code;
+    quantityController.text = productToEdit!.quantity.toString();
+    vatController.text = productToEdit!.vat.toString();
+  }
+  return null;
+}, [productToEdit]);
+
 
     void cancelAddProduct() {
   if (productToEdit == null) {
@@ -220,7 +238,19 @@ kHeight16,
             kHeight16,
 
             // Field: Quantity (always in KG)
-            _buildLabel('Quantity (in Kg)'),
+      _buildLabel('Total Stock (in Kg)'),
+      const SizedBox(height: 6),
+const Text(
+  'Enter the TOTAL stock available. '
+  'System will automatically calculate the adjustment.',
+  style: TextStyle(
+    fontSize: 12,
+    color: Colors.grey,
+  ),
+),
+
+
+
             _buildTextField(
               controller: quantityController,
               hintText: 'Enter quantity in Kg',
