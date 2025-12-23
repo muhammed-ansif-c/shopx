@@ -51,22 +51,22 @@ class CartScreen extends HookConsumerWidget {
     );
 
     // Discount input controller
-   final discountController = useTextEditingController();
-final discountAmount = useState<double>(0);
+    final discountController = useTextEditingController();
+    final discountAmount = useState<double>(0);
 
-useEffect(() {
-  discountController.text = "0";
-  discountController.addListener(() {
-    discountAmount.value =
-        double.tryParse(discountController.text) ?? 0.0;
-  });
-  return null;
-}, []);
+    useEffect(() {
+      discountController.text = "0";
+      discountController.addListener(() {
+        discountAmount.value = double.tryParse(discountController.text) ?? 0.0;
+      });
+      return null;
+    }, []);
 
     // Taxable amount (after discount)
- final double taxableAmount =
-    (subTotal - discountAmount.value).clamp(0, double.infinity);
-
+    final double taxableAmount = (subTotal - discountAmount.value).clamp(
+      0,
+      double.infinity,
+    );
 
     // VAT (15% after discount)
     final double vatAmount = taxableAmount * VAT_PERCENTAGE / 100;
@@ -122,8 +122,7 @@ useEffect(() {
               customerId: selectedCustomer.value?.id ?? 0,
               items: saleItems,
               paymentMethod: paymentMethod.value,
-             discountAmount: discountAmount.value,
-
+              discountAmount: discountAmount.value,
             );
 
         // OPTIONAL INFO MESSAGE (correct place)
@@ -504,23 +503,52 @@ useEffect(() {
                           // _buildSummaryRow("Discount :", discount),
                           _buildSummaryRow("Sub total :", subTotal),
 
-                          // DISCOUNT INPUT
-                          Container(
-                            margin: const EdgeInsets.only(bottom: 8),
-                            padding: const EdgeInsets.symmetric(horizontal: 12),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFF3F4F6),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: TextField(
-                              controller: discountController,
-                              keyboardType: TextInputType.number,
-                              decoration: const InputDecoration(
-                                border: InputBorder.none,
-                                labelText: "Discount (SAR)",
-                              ),
-                            ),
-                          ),
+                        // DISCOUNT ROW (MATCHES SUMMARY STYLE)
+Container(
+  margin: const EdgeInsets.only(bottom: 8),
+  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+  decoration: BoxDecoration(
+    color: const Color(0xFFF3F4F6),
+    borderRadius: BorderRadius.circular(12),
+  ),
+  child: Row(
+    children: [
+      Text(
+        "Discount :",
+        style: TextStyle(
+          color: Colors.grey[600],
+          fontSize: 14,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+      const Spacer(),
+      SizedBox(
+        width: 100,
+        child: TextField(
+          controller: discountController,
+          keyboardType: TextInputType.number,
+          textAlign: TextAlign.right,
+          decoration: const InputDecoration(
+            border: InputBorder.none,
+            hintText: "0.00",
+          ),
+          style: TextStyle(
+            color: Colors.grey[700],
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+    ],
+  ),
+),
+
+
+
+
+
+
+
 
                           _buildSummaryRow("VAT (15%) :", vatAmount),
 
