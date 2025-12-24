@@ -258,11 +258,12 @@ class PdfReceiptService {
                       child: pw.Table(
                         border: pw.TableBorder.all(),
                         children: [
-                          _totalRow(
-                            arabicFont,
-                            'Taxable Amount\nالمبلغ الخاضع للضريبة',
-                            receipt.subTotal,
-                          ),
+                        _totalRow(
+  arabicFont,
+  'Taxable Amount\nالمبلغ الخاضع للضريبة',
+  receipt.subTotal - (receipt.discount ?? 0.0),
+),
+
                           _totalRow(
                             arabicFont,
                             'Discount\nالخصم',
