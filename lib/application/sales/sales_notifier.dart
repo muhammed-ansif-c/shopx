@@ -25,7 +25,7 @@ class SalesNotifier extends Notifier<SalesState> {
         customerId: customerId,
         items: items,
         paymentMethod: paymentMethod,
-         paymentStatus: paymentStatus, // 👈 NEW
+        paymentStatus: paymentStatus, // 👈 NEW
         discountAmount: discountAmount,
       );
 
@@ -58,12 +58,22 @@ class SalesNotifier extends Notifier<SalesState> {
     }
   }
 
-  Future<void> fetchAllSales() async {
+  // ADMIN
+  Future<void> fetchAdminSales() async {
     state = state.copyWith(isLoading: true);
-
     try {
-      final repo = ref.read(salesRepositoryProvider);
-      final list = await repo.getAllSales();
+      final list = await ref.read(salesRepositoryProvider).getAdminSales();
+      state = state.copyWith(isLoading: false, sales: list);
+    } catch (e) {
+      state = state.copyWith(isLoading: false, error: e.toString());
+    }
+  }
+
+  // USER (already correct)
+  Future<void> fetchMySales() async {
+    state = state.copyWith(isLoading: true);
+    try {
+      final list = await ref.read(salesRepositoryProvider).getMySales();
       state = state.copyWith(isLoading: false, sales: list);
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());

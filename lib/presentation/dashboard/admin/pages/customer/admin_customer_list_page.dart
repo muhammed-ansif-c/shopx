@@ -17,7 +17,7 @@ class AdminCustomerListPage extends HookConsumerWidget {
 
     final searchQuery = useState('');
     final selectedArea = useState<String>("All");
-    final selectedSalespersonName = useState<String>("All");
+    final selectedSalespersonId = useState<int?>(null);
     final selectedFilterType = useState<CustomerFilterType?>(null);
 
     // STATE: Track expanded row
@@ -32,16 +32,7 @@ class AdminCustomerListPage extends HookConsumerWidget {
       for (final s in salesmanState.salesmen)
         if (s.id != null) s.id!: s.username,
     };
-
-    final salespersonNames = [
-      "All",
-      ...{
-        for (final c in customers)
-          if (c.salespersonId != null &&
-              salespersonMap.containsKey(c.salespersonId))
-            salespersonMap[c.salespersonId!]!,
-      },
-    ];
+    final salespersons = salesmanState.salesmen;
 
     final areas = [
       "All",
@@ -67,10 +58,8 @@ class AdminCustomerListPage extends HookConsumerWidget {
 
       if (selectedFilterType.value == CustomerFilterType.salesperson) {
         matchesFilter =
-            selectedSalespersonName.value == "All" ||
-            (customer.salespersonId != null &&
-                salespersonMap[customer.salespersonId] ==
-                    selectedSalespersonName.value);
+            selectedSalespersonId.value == null ||
+            customer.salespersonId == selectedSalespersonId.value;
       }
 
       return matchesSearch && matchesFilter;
@@ -157,30 +146,31 @@ class AdminCustomerListPage extends HookConsumerWidget {
             child: InkWell(
               borderRadius: BorderRadius.circular(14),
               onTap: () async {
-                final result = await showModalBottomSheet<CustomerFilterResult>(
-                  context: context,
-                  shape: const RoundedRectangleBorder(
-                    borderRadius: BorderRadius.vertical(
-                      top: Radius.circular(20),
-                    ),
-                  ),
-                  builder: (_) => CustomerFilterModal(
-                    areas: areas,
-                    salespersons: salespersonNames,
-                    selectedArea: selectedArea.value,
-                    selectedSalesperson: selectedSalespersonName.value,
-                  ),
-                );
+              final result = await showDialog<CustomerFilterResult>(
+  context: context,
+  builder: (_) => CustomerFilterDialog(
+    areas: areas,
+    salespersons: salespersons, // ✅ PASS FULL SALESMEN LIST
+  ),
+);
 
-                if (result != null) {
-                  selectedFilterType.value = result.filterType;
-                  selectedArea.value = result.area;
-                  selectedSalespersonName.value = result.salesperson;
-                }
+if (result == null) return;
+
+if (result.filterType == CustomerFilterType.area) {
+  selectedFilterType.value = CustomerFilterType.area;
+  selectedArea.value = result.value;
+  selectedSalespersonId.value = null;
+} else {
+  selectedFilterType.value = CustomerFilterType.salesperson;
+  selectedSalespersonId.value = result.salespersonId;
+  selectedArea.value = "All";
+}
+
               },
               child: Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 16,
+
                   vertical: 16,
                 ),
                 decoration: BoxDecoration(

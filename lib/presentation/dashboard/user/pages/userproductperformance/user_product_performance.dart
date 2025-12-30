@@ -1,37 +1,35 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:intl/intl.dart';
 
+import 'package:shopx/application/auth/auth_notifier.dart';
 import 'package:shopx/application/salesPerformance/sales_performance_notifier.dart';
 import 'package:shopx/application/salesPerformance/sales_performance_state.dart';
-import 'package:shopx/application/salesman/salesman_notifier.dart';
-import 'package:shopx/presentation/dashboard/admin/pages/productPerformance/product_performance_modal.dart';
+import 'package:shopx/presentation/dashboard/user/pages/userproductperformance/user_product_performance_modal.dart';
 
-class ProductPerformancePage extends HookConsumerWidget {
-  const ProductPerformancePage({super.key});
+class UserProductPerformancePage extends HookConsumerWidget {
+  const UserProductPerformancePage({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final primaryBlue = const Color(0xFF1D72D6);
+
+    final authState = ref.watch(authNotifierProvider);
+    
+
     final state = ref.watch(salesPerformanceNotifierProvider);
-useEffect(() {
-  Future.microtask(() async {
-    // 🔥 THIS WAS MISSING
-    await ref.read(salesmanNotifierProvider.notifier).fetchSalesmen();
 
-    // Load product performance
-    final notifier = ref.read(salesPerformanceNotifierProvider.notifier);
-    final s = ref.read(salesPerformanceNotifierProvider);
-
-    notifier.loadAdminProductPerformance(
-      start: s.startDate,
-      end: s.endDate,
-    );
-  });
-  return null;
-}, []);
-
+    useEffect(() {
+      Future.microtask(() {
+        ref.read(salesPerformanceNotifierProvider.notifier)
+            .loadUserProductPerformance(
+              start: state.startDate,
+              end: state.endDate,
+            
+            );
+      });
+      return null;
+    }, []);
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -51,38 +49,34 @@ useEffect(() {
         ),
         actions: [
           TextButton.icon(
-            onPressed: () async {
+           onPressed: () async {
+  final result =
+      await showDialog<UserProductPerformanceFilterResult>(
+    context: context,
+    barrierDismissible: true,
+    builder: (context) {
+      return Dialog(
+        insetPadding: const EdgeInsets.symmetric(
+          horizontal: 20,
+          vertical: 80,
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: const UserProductPerformanceModal(),
+      );
+    },
+  );
 
-
-
-
-              final result =
-    await showDialog<ProductPerformanceFilterResult>(
-  context: context,
-  barrierDismissible: true,
-  builder: (context) {
-    return Dialog(
-      insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 80),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: const ProductPerformanceFilterModal(),
-    );
-  },
-);
-
-
-              if (result != null) {
-                ref
-                    .read(salesPerformanceNotifierProvider.notifier)
-                    .loadAdminProductPerformance(
-                      start: result.startDate,
-                      end: result.endDate,
-                      salespersonId: result.salespersonId,
-                    );
-              }
-            },
-
+  if (result != null) {
+    ref
+        .read(salesPerformanceNotifierProvider.notifier)
+        .loadUserProductPerformance(
+          start: result.startDate,
+          end: result.endDate,
+        );
+  }
+},
 
             icon: Icon(Icons.tune, color: primaryBlue),
             label: Text(
@@ -93,7 +87,6 @@ useEffect(() {
               ),
             ),
           ),
-          const SizedBox(width: 8),
         ],
       ),
       body: state.loading

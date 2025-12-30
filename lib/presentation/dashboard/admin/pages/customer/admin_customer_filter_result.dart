@@ -1,154 +1,159 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart';
-
-
+import 'package:shopx/domain/salesman/salesman.dart';
 
 enum CustomerFilterType { area, salesperson }
 
 class CustomerFilterResult {
   final CustomerFilterType filterType;
-  final String area;
-  final String salesperson;
+  final String value; // area name OR salesperson name (for display)
+  final int? salespersonId;
 
   CustomerFilterResult({
     required this.filterType,
-    required this.area,
-    required this.salesperson,
+    required this.value,
+    this.salespersonId,
   });
 }
 
-
-
-/// MODAL UI
-class CustomerFilterModal extends HookConsumerWidget {
+class CustomerFilterDialog extends HookWidget {
   final List<String> areas;
-  final List<String> salespersons;
-  final String selectedArea;
-  final String selectedSalesperson;
+  final List<Salesman> salespersons;
 
-  const CustomerFilterModal({
+  const CustomerFilterDialog({
     super.key,
     required this.areas,
     required this.salespersons,
-    required this.selectedArea,
-    required this.selectedSalesperson,
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final filterType =
-        useState<CustomerFilterType>(CustomerFilterType.area);
+  Widget build(BuildContext context) {
+    final filterType = useState<CustomerFilterType>(CustomerFilterType.area);
+    final searchText = useState("");
 
-    final area = useState<String>(selectedArea);
-    final salesperson = useState<String>(selectedSalesperson);
+    // ✅ AREA FILTER
+    final filteredAreas = areas
+        .where(
+          (a) =>
+              a != "All" &&
+              a.toLowerCase().contains(searchText.value.toLowerCase()),
+        )
+        .toList();
 
-    return Padding(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            "Filter Customers",
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
+    // ✅ SALESPERSON FILTER (ID-SAFE)
+    final filteredSalespersons = salespersons
+        .where(
+          (s) =>
+              s.username.toLowerCase().contains(searchText.value.toLowerCase()),
+        )
+        .toList();
 
-          const SizedBox(height: 20),
-
-          /// STEP 1 — CATEGORY TYPE
-          DropdownButtonFormField<CustomerFilterType>(
-            value: filterType.value,
-            decoration: const InputDecoration(
-              labelText: "Category",
-              border: OutlineInputBorder(),
-            ),
-            items: const [
-              DropdownMenuItem(
-                value: CustomerFilterType.area,
-                child: Text("Area"),
-              ),
-              DropdownMenuItem(
-                value: CustomerFilterType.salesperson,
-                child: Text("Salesperson"),
-              ),
-            ],
-            onChanged: (v) => filterType.value = v!,
-          ),
-
-          const SizedBox(height: 16),
-
-          /// STEP 2 — AREA VALUES
-          if (filterType.value == CustomerFilterType.area)
-            DropdownButtonFormField<String>(
-              value: area.value,
+    return AlertDialog(
+      backgroundColor: Colors.white,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      title: const Text(
+        "Filter Customers",
+        style: TextStyle(fontWeight: FontWeight.bold),
+      ),
+      content: SizedBox(
+        width: double.maxFinite,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            /// CATEGORY
+            DropdownButtonFormField<CustomerFilterType>(
+              value: filterType.value,
               decoration: const InputDecoration(
-                labelText: "Area",
+                labelText: "Category",
                 border: OutlineInputBorder(),
               ),
-              items: areas
-                  .map(
-                    (a) => DropdownMenuItem(value: a, child: Text(a)),
-                  )
-                  .toList(),
-              onChanged: (v) => area.value = v!,
+              items: const [
+                DropdownMenuItem(
+                  value: CustomerFilterType.area,
+                  child: Text("Area"),
+                ),
+                DropdownMenuItem(
+                  value: CustomerFilterType.salesperson,
+                  child: Text("Salesperson"),
+                ),
+              ],
+              onChanged: (v) {
+                filterType.value = v!;
+                searchText.value = "";
+              },
             ),
 
-          /// STEP 2 — SALESPERSON VALUES
-          if (filterType.value == CustomerFilterType.salesperson)
-            Autocomplete<String>(
-              initialValue: TextEditingValue(
-                text: salesperson.value == "All" ? "" : salesperson.value,
+            const SizedBox(height: 12),
+
+            /// SEARCH
+            TextField(
+              decoration: InputDecoration(
+                labelText: filterType.value == CustomerFilterType.area
+                    ? "Search Area"
+                    : "Search Salesperson",
+                border: const OutlineInputBorder(),
               ),
-              optionsBuilder: (text) {
-                if (text.text.isEmpty) {
-                  return salespersons.where((e) => e != "All");
-                }
-                return salespersons.where(
-                  (e) =>
-                      e != "All" &&
-                      e.toLowerCase().contains(text.text.toLowerCase()),
-                );
-              },
-              onSelected: (s) => salesperson.value = s,
-              fieldViewBuilder: (_, controller, focusNode, __) {
-                return TextField(
-                  controller: controller,
-                  focusNode: focusNode,
-                  decoration: const InputDecoration(
-                    labelText: "Salesperson",
-                    border: OutlineInputBorder(),
-                  ),
-                );
-              },
+              onChanged: (v) => searchText.value = v,
             ),
 
-          const SizedBox(height: 24),
+            const SizedBox(height: 12),
 
-          /// APPLY
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-           onPressed: () {
-  Navigator.pop(
-    context,
-    CustomerFilterResult(
-      filterType: filterType.value,
-      area: filterType.value == CustomerFilterType.area
-          ? area.value
-          : "All",
-      salesperson: filterType.value == CustomerFilterType.salesperson
-          ? salesperson.value
-          : "All",
-    ),
-  );
-},
-
-              child: const Text("Apply"),
+            /// LIST
+            SizedBox(
+              height: 220,
+              child: filterType.value == CustomerFilterType.area
+                  ? (filteredAreas.isEmpty
+                        ? const Center(child: Text("No results"))
+                        : ListView.builder(
+                            itemCount: filteredAreas.length,
+                            itemBuilder: (context, index) {
+                              final area = filteredAreas[index];
+                              return ListTile(
+                                title: Text(area),
+                                onTap: () {
+                                  Navigator.pop(
+                                    context,
+                                    CustomerFilterResult(
+                                      filterType: CustomerFilterType.area,
+                                      value: area,
+                                    ),
+                                  );
+                                },
+                              );
+                            },
+                          ))
+                  : (filteredSalespersons.isEmpty
+                        ? const Center(child: Text("No results"))
+                        : ListView.builder(
+                            itemCount: filteredSalespersons.length,
+                            itemBuilder: (context, index) {
+                              final s = filteredSalespersons[index];
+                              return ListTile(
+                                title: Text(s.username),
+                                onTap: () {
+                                  Navigator.pop(
+                                    context,
+                                    CustomerFilterResult(
+                                      filterType:
+                                          CustomerFilterType.salesperson,
+                                      value: s.username,
+                                      salespersonId: s.id,
+                                    ),
+                                  );
+                                },
+                              );
+                            },
+                          )),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text("Cancel"),
+        ),
+      ],
     );
   }
 }

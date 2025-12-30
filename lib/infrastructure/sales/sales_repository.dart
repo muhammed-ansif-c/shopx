@@ -83,12 +83,22 @@ return id;
   }
 }
 
-
-  Future<List<Sale>> getAllSales() async {
-    final list = await api.getAllSales();
-    return list.map((e) => Sale.fromJson(e)).toList();
-  }
+// ADMIN
+Future<List<Sale>> getAdminSales() async {
+  final list = await api.getAdminSales();
+  return list.map((e) => Sale.fromJson(e)).toList();
 }
+
+// USER
+Future<List<Sale>> getMySales() async {
+  final list = await api.getMySales();
+  return list.map((e) => Sale.fromJson(e)).toList();
+}
+
+
+}
+
+
 
 // ----------------------------------------------------------
 // PROVIDERS (THE PART YOU MISSED)
