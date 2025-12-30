@@ -72,12 +72,20 @@ final paymentStatus = useState<String>("paid"); // 👈 NEW
         return;
       }
 
-      if (nameCtrl.text.isEmpty || phoneCtrl.text.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Please fill in Customer Details")),
-        );
-        return;
-      }
+      // if (nameCtrl.text.isEmpty || phoneCtrl.text.isEmpty) {
+      //   ScaffoldMessenger.of(context).showSnackBar(
+      //     const SnackBar(content: Text("Please fill in Customer Details")),
+      //   );
+      //   return;
+      // }
+
+      if (nameCtrl.text.isEmpty) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    const SnackBar(content: Text("Please enter customer name")),
+  );
+  return;
+}
+
 
       // 2. Prepare sale items for backend
       final saleItems = cartItems.map((item) {
