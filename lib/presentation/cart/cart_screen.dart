@@ -23,14 +23,16 @@ class CartScreen extends HookConsumerWidget {
 
     final selectedCustomer = useState<Customer?>(
       null,
-    ); //storing selected customer
-
-    useEffect(() {
-      Future.microtask(() {
-        ref.read(customerNotifierProvider.notifier).fetchCustomers();
-      });
-      return null;
-    }, []);
+    ); 
+    
+    //storing selected customer
+useEffect(() {
+  Future.microtask(() {
+    // 🧾 Cart needs ALL customers
+    ref.read(customerNotifierProvider.notifier).fetchAllCustomers();
+  });
+  return null;
+}, []);
 
     // Discount input controller
     final discountController = useTextEditingController();
