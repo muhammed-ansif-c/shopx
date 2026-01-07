@@ -74,9 +74,10 @@ class AuthNotifier extends Notifier<AuthState> {
 
         state = AuthState.authenticated(user, token: _accessToken);
         return;
-      } catch (_) {
+      } 
+      catch (_) {
         // Network error → stop splash, let UI show NoInternetScreen
-        state = state.copyWith(isInitializing: false);
+        state = state.copyWith(isInitializing: true);
         return;
       }
     }
