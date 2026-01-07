@@ -10,11 +10,22 @@ class AuthNotifier extends Notifier<AuthState> {
   String? _selectedOtpMethod; // ✅ ADD: Store selected method
   String? _accessToken;
   String? _refreshToken;
+  bool _hasInitialized = false;
+
+  // @override
+  // AuthState build() {
+  //   _initAuth(); // async init
+  //   return const AuthState(isInitializing: true); // 🔥 IMPORTANT
+  // }
 
   @override
   AuthState build() {
-    _initAuth(); // async init
-    return const AuthState(isInitializing: true); // 🔥 IMPORTANT
+    if (!_hasInitialized) {
+      _hasInitialized = true;
+      _initAuth();
+    }
+
+    return const AuthState(isInitializing: true);
   }
 
   // final storedToken = await _loadToken();
@@ -64,13 +75,8 @@ class AuthNotifier extends Notifier<AuthState> {
         state = AuthState.authenticated(user, token: _accessToken);
         return;
       } catch (_) {
-        // 🔥 CRITICAL FIX
-        // Internet OFF → STOP init, DO NOT block splash
-        state = AuthState(
-          user: state.user,
-          token: _accessToken,
-          isInitializing: false,
-        );
+        // Network error → stop splash, let UI show NoInternetScreen
+        state = state.copyWith(isInitializing: false);
         return;
       }
     }
@@ -401,10 +407,8 @@ class AuthNotifier extends Notifier<AuthState> {
 
       state = AuthState.authenticated(user, token: _accessToken);
     } catch (e) {
-      // ✅ DO NOT logout on network error
-      // ✅ Keep existing tokens and state
-      // ✅ App can recover automatically when internet comes back
-      state = state.copyWith(isLoading: false, isInitializing: false);
+      // Network error → do NOTHING
+      return;
     }
   }
 }

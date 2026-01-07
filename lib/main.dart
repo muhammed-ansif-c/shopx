@@ -36,23 +36,28 @@ class MyApp extends HookConsumerWidget {
     //   home = const SelectionScreen();
     // }
 
-    final home = connectivity.when(
+   final home = connectivity.when(
   data: (isOnline) {
     if (!isOnline) {
       return const NoInternetScreen();
-    } else if (authState.isInitializing) {
+    }
+
+    if (authState.isInitializing) {
       return const SplashScreen();
-    } else if (authState.isAuthenticated) {
+    }
+
+    if (authState.isAuthenticated) {
       return authState.user!.userType == "admin"
           ? const AdminDashboard()
           : const UserDashboard();
-    } else {
-      return const SelectionScreen();
     }
+
+    return const SelectionScreen();
   },
   loading: () => const SplashScreen(),
   error: (_, __) => const NoInternetScreen(),
 );
+
 
 
     return MaterialApp(
