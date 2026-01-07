@@ -1,16 +1,15 @@
-import 'dart:async';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-final connectivityProvider = StreamProvider<bool>((ref) {
-  final controller = StreamController<bool>();
+final connectivityProvider = StreamProvider<bool>((ref) async* {
+  final connectivity = Connectivity();
 
-  final subscription = Connectivity().onConnectivityChanged.listen((result) {
-    controller.add(result != ConnectivityResult.none);
-  });
+  // ✅ 1. IMMEDIATELY emit current connectivity state
+  final initialResult = await connectivity.checkConnectivity();
+  yield initialResult != ConnectivityResult.none;
 
-  ref.onDispose(() => subscription.cancel());
-
-  return controller.stream;
+  // ✅ 2. Then listen for future changes
+  await for (final result in connectivity.onConnectivityChanged) {
+    yield result != ConnectivityResult.none;
+  }
 });
-//tells your app: internet ON or OFF
