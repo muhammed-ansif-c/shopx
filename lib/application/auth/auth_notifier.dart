@@ -74,19 +74,20 @@ class AuthNotifier extends Notifier<AuthState> {
 
         state = AuthState.authenticated(user, token: _accessToken);
         return;
-      } 
-   catch (_) {
-  // 🔑 Access token may be expired → try refresh token
-  if (_refreshToken != null) {
-    await _refreshTokenAndRecover();
-    return;
-  }
+      } catch (_) {
+        if (_refreshToken != null) {
+          await _refreshTokenAndRecover();
 
-  // ❌ No refresh token → force logout
-  state = const AuthState.unauthenticated();
-  return;
-}
+          // ✅ SAFETY NET: ENSURE INITIALIZATION ENDS
+          if (state.isInitializing) {
+            state = const AuthState.unauthenticated();
+          }
+          return;
+        }
 
+        state = const AuthState.unauthenticated();
+        return;
+      }
     }
 
     // Access token failed but refresh token exists
@@ -393,7 +394,6 @@ class AuthNotifier extends Notifier<AuthState> {
 
   Future<void> _refreshTokenAndRecover() async {
     if (_refreshToken == null) {
-      // ✅ No refresh token → force login
       await _clearAllTokens();
       state = const AuthState.unauthenticated();
       return;
@@ -415,8 +415,8 @@ class AuthNotifier extends Notifier<AuthState> {
 
       state = AuthState.authenticated(user, token: _accessToken);
     } catch (e) {
-      // Network error → do NOTHING
-      return;
+      // ✅ FIX: INITIALIZATION MUST END
+      state = const AuthState.unauthenticated();
     }
   }
 }
