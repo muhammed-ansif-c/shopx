@@ -75,11 +75,18 @@ class AuthNotifier extends Notifier<AuthState> {
         state = AuthState.authenticated(user, token: _accessToken);
         return;
       } 
-      catch (_) {
-        // Network error → stop splash, let UI show NoInternetScreen
-        state = state.copyWith(isInitializing: true);
-        return;
-      }
+   catch (_) {
+  // 🔑 Access token may be expired → try refresh token
+  if (_refreshToken != null) {
+    await _refreshTokenAndRecover();
+    return;
+  }
+
+  // ❌ No refresh token → force logout
+  state = const AuthState.unauthenticated();
+  return;
+}
+
     }
 
     // Access token failed but refresh token exists
