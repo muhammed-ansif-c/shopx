@@ -14,7 +14,7 @@ class AuthNotifier extends Notifier<AuthState> {
   @override
   AuthState build() {
     _initAuth(); // async init
-    return const AuthState.initial(); // 🔥 IMPORTANT
+    return const AuthState(isInitializing: true); // 🔥 IMPORTANT
   }
 
   // final storedToken = await _loadToken();
@@ -64,7 +64,14 @@ class AuthNotifier extends Notifier<AuthState> {
         state = AuthState.authenticated(user, token: _accessToken);
         return;
       } catch (_) {
-        // access token expired → try refresh
+        // 🔥 CRITICAL FIX
+        // Internet OFF → STOP init, DO NOT block splash
+        state = AuthState(
+          user: state.user,
+          token: _accessToken,
+          isInitializing: false,
+        );
+        return;
       }
     }
 
@@ -397,7 +404,7 @@ class AuthNotifier extends Notifier<AuthState> {
       // ✅ DO NOT logout on network error
       // ✅ Keep existing tokens and state
       // ✅ App can recover automatically when internet comes back
-      state = state.copyWith(isLoading: false);
+      state = state.copyWith(isLoading: false, isInitializing: false);
     }
   }
 }

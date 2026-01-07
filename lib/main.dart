@@ -20,9 +20,9 @@ class MyApp extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final authState = ref.watch(authNotifierProvider);
-    final isOnline = ref.watch(connectivityProvider).value ?? true;
+    final connectivity = ref.watch(connectivityProvider);
 
-    Widget home;
+    // Widget home;
 
     // if (authState.isInitializing) {
     //   home = const SplashScreen();
@@ -36,19 +36,24 @@ class MyApp extends HookConsumerWidget {
     //   home = const SelectionScreen();
     // }
 
+    final home = connectivity.when(
+  data: (isOnline) {
     if (!isOnline) {
-      home = const NoInternetScreen();
+      return const NoInternetScreen();
     } else if (authState.isInitializing) {
-      home = const SplashScreen();
+      return const SplashScreen();
     } else if (authState.isAuthenticated) {
-      if (authState.user!.userType == "admin") {
-        home = const AdminDashboard();
-      } else {
-        home = const UserDashboard();
-      }
+      return authState.user!.userType == "admin"
+          ? const AdminDashboard()
+          : const UserDashboard();
     } else {
-      home = const SelectionScreen();
+      return const SelectionScreen();
     }
+  },
+  loading: () => const SplashScreen(),
+  error: (_, __) => const NoInternetScreen(),
+);
+
 
     return MaterialApp(
       debugShowCheckedModeBanner: false,
