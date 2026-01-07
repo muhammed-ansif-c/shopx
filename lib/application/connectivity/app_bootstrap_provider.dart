@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shopx/application/auth/auth_notifier.dart';
+import 'package:shopx/application/auth/auth_state.dart';
 import 'package:shopx/application/connectivity/connectivity_provider.dart';
 
 enum AppBootstrapState {
@@ -10,14 +11,29 @@ enum AppBootstrapState {
 
 final appBootstrapProvider = Provider<AppBootstrapState>((ref) {
   final connectivity = ref.watch(connectivityProvider);
-  final auth = ref.watch(authNotifierProvider);
+  final authState = ref.watch(authNotifierProvider);
 
   return connectivity.when(
     loading: () => AppBootstrapState.loading,
     error: (_, __) => AppBootstrapState.offline,
     data: (isOnline) {
-      if (!isOnline) return AppBootstrapState.offline;
-      if (auth.isInitializing) return AppBootstrapState.loading;
+      // 🔴 Internet OFF → always offline screen
+      if (!isOnline) {
+        return AppBootstrapState.offline;
+      }
+
+      // 🔑 Internet ON but auth not yet reloaded
+      if (!authState.isAuthenticated && !authState.isInitializing) {
+        ref.read(authNotifierProvider.notifier).retryAuth();
+        return AppBootstrapState.loading;
+      }
+
+      // ⏳ Auth still initializing
+      if (authState.isInitializing) {
+        return AppBootstrapState.loading;
+      }
+
+      // ✅ Everything ready
       return AppBootstrapState.ready;
     },
   );

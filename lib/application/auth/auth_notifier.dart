@@ -392,6 +392,13 @@ class AuthNotifier extends Notifier<AuthState> {
     }
   }
 
+
+    // 🔁 Re-run auth initialization (used when internet comes back)
+  void retryAuth() {
+    _initAuth();
+  }
+
+
   Future<void> _refreshTokenAndRecover() async {
     if (_refreshToken == null) {
       await _clearAllTokens();
