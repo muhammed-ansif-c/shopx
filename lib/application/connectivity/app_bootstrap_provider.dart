@@ -2,11 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shopx/application/auth/auth_notifier.dart';
 import 'package:shopx/application/connectivity/connectivity_provider.dart';
 
-enum AppBootstrapState {
-  loading,
-  offline,
-  ready,
-}
+enum AppBootstrapState { loading, offline, ready }
 
 final appBootstrapProvider = Provider<AppBootstrapState>((ref) {
   final connectivity = ref.watch(connectivityProvider);
@@ -21,12 +17,18 @@ final appBootstrapProvider = Provider<AppBootstrapState>((ref) {
         return AppBootstrapState.offline;
       }
 
-      // ⏳ Auth is still initializing → splash
+      // ⏳ Auth still restoring session → splash
       if (authState.isInitializing) {
         return AppBootstrapState.loading;
       }
 
-      // ✅ Internet ON + auth resolved (authenticated OR unauthenticated)
+    // 🔐 Auth not authenticated yet, but initialization finished → still wait
+if (!authState.isAuthenticated && authState.isInitializing == false) {
+  return AppBootstrapState.loading;
+}
+
+
+      // ✅ Internet ON + auth fully resolved
       return AppBootstrapState.ready;
     },
   );
