@@ -24,60 +24,30 @@ class MyApp extends HookConsumerWidget {
     // final connectivity = ref.watch(connectivityProvider);
     final bootstrap = ref.watch(appBootstrapProvider);
 
-    
-  // 🔥 ADD THIS BLOCK (EXACTLY)
-  ref.listen<AppBootstrapState>(appBootstrapProvider, (previous, next) {
-    if (previous == AppBootstrapState.offline &&
-        next == AppBootstrapState.ready) {
-      ref.read(authNotifierProvider.notifier).retryAuth();
-    }
-  });
 
-    // Widget home;
 
-    // if (authState.isInitializing) {
-    //   home = const SplashScreen();
-    // } else if (authState.isAuthenticated) {
-    //   if (authState.user!.userType == "admin") {
-    //     home = const AdminDashboard();
-    //   } else {
-    //     home = const UserDashboard();
-    //   }
-    // } else {
-    //   home = const SelectionScreen();
-    // }
+  Widget home;
 
-    Widget home;
+if (authState.isInitializing) {
+  home = const SplashScreen(); // 🔒 ONLY HERE
+} else {
+  switch (bootstrap) {
+    case AppBootstrapState.offline:
+      home = const NoInternetScreen();
+      break;
 
-    switch (bootstrap) {
-      case AppBootstrapState.loading:
-        home = const SplashScreen();
-        break;
-
-      case AppBootstrapState.offline:
-        home = const NoInternetScreen();
-        break;
-
-   case AppBootstrapState.ready:
-  final authNotifier = ref.read(authNotifierProvider.notifier);
-
-  // 🔒 CRITICAL FIX:
-  // Tokens exist → NEVER show SelectionScreen
-  if (authNotifier.hasLocalSession && !authState.isAuthenticated) {
-    home = const SplashScreen(); // wait for auth restore
-  } 
-  else if (authState.isAuthenticated) {
-    home = authState.user!.userType == "admin"
-        ? const AdminDashboard()
-        : const UserDashboard();
-  } 
-  else {
-    home = const SelectionScreen();
+    case AppBootstrapState.ready:
+      if (authState.isAuthenticated) {
+        home = authState.user!.userType == "admin"
+            ? const AdminDashboard()
+            : const UserDashboard();
+      } else {
+        home = const SelectionScreen();
+      }
+      break;
   }
-  break;
+}
 
-
-    }
 
     return MaterialApp(
       debugShowCheckedModeBanner: false,
