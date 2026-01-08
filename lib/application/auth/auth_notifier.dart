@@ -437,9 +437,14 @@ void retryAuth() {
       state = const AuthState.unauthenticated();
     }
   }
+
+  bool get hasLocalSession =>
+    _accessToken != null || _refreshToken != null;
+
 }
 
 // 🎯 PROVIDER: Makes AuthNotifier available throughout the app
 final authNotifierProvider = NotifierProvider<AuthNotifier, AuthState>(() {
   return AuthNotifier();
 });
+

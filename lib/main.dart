@@ -58,17 +58,24 @@ class MyApp extends HookConsumerWidget {
         home = const NoInternetScreen();
         break;
 
-     case AppBootstrapState.ready:
-  if (authState.isInitializing) {
-    home = const SplashScreen();
-  } else if (authState.isAuthenticated) {
+   case AppBootstrapState.ready:
+  final authNotifier = ref.read(authNotifierProvider.notifier);
+
+  // 🔒 CRITICAL FIX:
+  // Tokens exist → NEVER show SelectionScreen
+  if (authNotifier.hasLocalSession && !authState.isAuthenticated) {
+    home = const SplashScreen(); // wait for auth restore
+  } 
+  else if (authState.isAuthenticated) {
     home = authState.user!.userType == "admin"
         ? const AdminDashboard()
         : const UserDashboard();
-  } else {
+  } 
+  else {
     home = const SelectionScreen();
   }
   break;
+
 
     }
 
