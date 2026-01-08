@@ -398,17 +398,12 @@ class AuthNotifier extends Notifier<AuthState> {
   }
 
   // 🔁 Re-run auth initialization (used when internet comes back)
- // 🔁 Re-run auth initialization (used when internet comes back)
 void retryAuth() {
-  if (state.isInitializing) {
-    // If already initializing, don't trigger again
-    return;
-  }
-  
-  // Set back to initializing and trigger auth check
+  // FORCE re-run auth when internet comes back
   state = state.copyWith(isInitializing: true);
   _initAuth();
 }
+
 
   Future<void> _refreshTokenAndRecover() async {
     if (_refreshToken == null) {
