@@ -7,23 +7,20 @@ class TransactionDetailsDialog extends StatelessWidget {
   final VoidCallback? onMarkAsPaid;
   final VoidCallback? onCancelSale;
 
-
   const TransactionDetailsDialog({
     super.key,
     required this.sale,
     this.onMarkAsPaid,
-      this.onCancelSale, // 👈 ADD
+    this.onCancelSale, // 👈 ADD
   });
 
   // bool get _isPending => sale.paymentStatus.toUpperCase() == 'PENDING';
 
-bool get _isPending =>
-    sale.paymentStatus.toUpperCase() == 'PENDING' &&
-    sale.saleStatus != 'voided';
+  bool get _isPending =>
+      sale.paymentStatus.toUpperCase() == 'PENDING' &&
+      sale.saleStatus != 'voided';
 
-bool get _isVoided => sale.saleStatus == 'voided';
-
-
+  bool get _isVoided => sale.saleStatus == 'voided';
 
   @override
   Widget build(BuildContext context) {
@@ -57,90 +54,83 @@ bool get _isVoided => sale.saleStatus == 'voided';
 
             const Divider(height: 24),
 
-            _amountRow(
-              "Total Amount",
-              sale.totalAmount,
-              isBold: true,
-            ),
+            _amountRow("Total Amount", sale.totalAmount, isBold: true),
 
             const SizedBox(height: 20),
 
-
             // ================= ITEMS =================
-
-const Text(
-  "Items",
-  style: TextStyle(
-    fontSize: 16,
-    fontWeight: FontWeight.bold,
-  ),
-),
-
-const SizedBox(height: 12),
-
-if (sale.items.isEmpty)
-  const Text(
-    "No items available",
-    style: TextStyle(color: Colors.grey),
-  )
-else
-  ...sale.items.map((item) {
-    final unitPrice = item.totalPrice / item.quantity;
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            item.productName,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
+            const Text(
+              "Items",
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
-          ),
-          const SizedBox(height: 4),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                "${item.quantity} × SAR ${unitPrice.toStringAsFixed(2)}",
-                style: TextStyle(
-                  fontSize: 13,
-                  color: Colors.grey[600],
-                ),
-              ),
-              Text(
-                "SAR ${item.totalPrice.toStringAsFixed(2)}",
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }),
 
-const SizedBox(height: 24),
+            const SizedBox(height: 12),
 
+            if (sale.items.isEmpty)
+              const Text(
+                "No items available",
+                style: TextStyle(color: Colors.grey),
+              )
+            else
+              ...sale.items.map((item) {
+                final unitPrice = item.totalPrice / item.quantity;
+
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        item.productName,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            "${item.quantity} × SAR ${unitPrice.toStringAsFixed(2)}",
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                          Text(
+                            "SAR ${item.totalPrice.toStringAsFixed(2)}",
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                );
+              }),
+
+            const SizedBox(height: 24),
 
             _statusChip(),
 
             const SizedBox(height: 24),
 
             // if (_isPending) _markAsPaidButton(context),
-
             if (!_isVoided && _isPending) _markAsPaidButton(context),
 
-if (!_isVoided)
-  const SizedBox(height: 12),
+            if (!_isVoided) const SizedBox(height: 12),
 
-if (!_isVoided)
-  _cancelSaleButton(context),
-
+            if (_isVoided)
+              const Text(
+                "This sale has been cancelled.",
+                style: TextStyle(
+                  color: Colors.red,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
           ],
         ),
       ),
@@ -155,10 +145,7 @@ if (!_isVoided)
       children: [
         const Text(
           "Transaction Details",
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
         IconButton(
           icon: const Icon(Icons.close),
@@ -180,19 +167,13 @@ if (!_isVoided)
             width: 110,
             child: Text(
               label,
-              style: const TextStyle(
-                fontSize: 13,
-                color: Color(0xFF6B7280),
-              ),
+              style: const TextStyle(fontSize: 13, color: Color(0xFF6B7280)),
             ),
           ),
           Expanded(
             child: Text(
               value.isEmpty ? "-" : value,
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-              ),
+              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
             ),
           ),
         ],
@@ -210,10 +191,7 @@ if (!_isVoided)
         children: [
           Text(
             label,
-            style: const TextStyle(
-              fontSize: 14,
-              color: Color(0xFF374151),
-            ),
+            style: const TextStyle(fontSize: 14, color: Color(0xFF374151)),
           ),
           Text(
             "SAR ${amount.toStringAsFixed(2)}",
@@ -226,15 +204,6 @@ if (!_isVoided)
       ),
     );
   }
-
-
-
-
-
-
-
-
-
 
   // ================= STATUS CHIP =================
 
@@ -275,35 +244,35 @@ if (!_isVoided)
   // }
 
   Widget _statusChip() {
-  final bool isVoided = sale.saleStatus == 'voided';
+    final bool isVoided = sale.saleStatus == 'voided';
 
-  final String label =
-      isVoided ? 'CANCELLED' : sale.paymentStatus.toUpperCase();
+    final String label = isVoided
+        ? 'CANCELLED'
+        : sale.paymentStatus.toUpperCase();
 
-  final Color bgColor = isVoided
-      ? Colors.red
-      : sale.paymentStatus.toUpperCase() == 'PAID'
-          ? const Color(0xFF1D72D6)
-          : const Color(0xFFF59E0B);
+    final Color bgColor = isVoided
+        ? Colors.red
+        : sale.paymentStatus.toUpperCase() == 'PAID'
+        ? const Color(0xFF1D72D6)
+        : const Color(0xFFF59E0B);
 
-  return Container(
-    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-    decoration: BoxDecoration(
-      color: bgColor,
-      borderRadius: BorderRadius.circular(12),
-    ),
-    child: Text(
-      label,
-      style: const TextStyle(
-        color: Colors.white,
-        fontSize: 12,
-        fontWeight: FontWeight.bold,
-        letterSpacing: 0.5,
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(12),
       ),
-    ),
-  );
-}
-
+      child: Text(
+        label,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 12,
+          fontWeight: FontWeight.bold,
+          letterSpacing: 0.5,
+        ),
+      ),
+    );
+  }
 
   // ================= MARK AS PAID =================
 
@@ -321,24 +290,21 @@ if (!_isVoided)
         ),
         child: const Text(
           "Mark as Paid",
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
         ),
       ),
     );
   }
-Widget _cancelSaleButton(BuildContext context) {
+
+ Widget _cancelSaleButton(BuildContext context) {
   return SizedBox(
     width: double.infinity,
     child: ElevatedButton(
-      onPressed: () async {
-        if (onCancelSale != null) {
-           onCancelSale!();
-        }
-        Navigator.of(context).pop();
-      },
+      onPressed: onCancelSale == null
+          ? null
+          : () async {
+               onCancelSale!();
+            },
       style: ElevatedButton.styleFrom(
         padding: const EdgeInsets.symmetric(vertical: 14),
         backgroundColor: Colors.red,
@@ -348,14 +314,10 @@ Widget _cancelSaleButton(BuildContext context) {
       ),
       child: const Text(
         "Cancel Sale",
-        style: TextStyle(
-          fontSize: 14,
-          fontWeight: FontWeight.bold,
-        ),
+        style: TextStyle(fontWeight: FontWeight.bold),
       ),
     ),
   );
 }
-
 
 }

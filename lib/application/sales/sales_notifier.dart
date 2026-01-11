@@ -91,6 +91,11 @@ class SalesNotifier extends Notifier<SalesState> {
   }
 }
 
+Future<void> refreshAdminSales() async {
+  await fetchAdminSales();
+}
+
+
 }
 
 final salesNotifierProvider = NotifierProvider<SalesNotifier, SalesState>(

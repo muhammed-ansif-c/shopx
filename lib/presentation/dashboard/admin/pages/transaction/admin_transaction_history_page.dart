@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:shopx/application/payments/payments_notifier.dart';
 import 'package:shopx/application/sales/sales_notifier.dart';
 import 'package:shopx/domain/sales/sale.dart';
 import 'package:shopx/widget/admintransaction/transaction_detail_dialog.dart';
@@ -149,9 +150,14 @@ class AdminTransactionHistoryPage extends HookConsumerWidget {
         //           (sum, sale) => sum + sale.totalAmount,
         //         );
 
-        final dailyTotal = dailySales
-            .where((s) => s.saleStatus != 'voided')
-            .fold<double>(0, (sum, sale) => sum + sale.totalAmount);
+       final dailyTotal = dailySales
+    .where(
+      (s) =>
+          s.paymentStatus.toUpperCase() == 'PAID' &&
+          s.saleStatus != 'voided',
+    )
+    .fold<double>(0, (sum, sale) => sum + sale.totalAmount);
+
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -241,31 +247,52 @@ class AdminTransactionHistoryPage extends HookConsumerWidget {
 
     return InkWell(
       borderRadius: BorderRadius.circular(20),
-      onTap: sale.saleStatus == 'voided'
-          ? null
-          : () {
-              showDialog(
-                context: context,
-                builder: (_) => TransactionDetailsDialog(
-                  sale: sale,
-                  onMarkAsPaid: sale.paymentStatus.toUpperCase() == 'PENDING'
-                      ? () {
-                          Navigator.of(context).pop();
-                          onRefresh();
-                        }
-                      : null,
-                  // ✅ Newly added cancel / void logic
-                  onCancelSale: () async {
+
+
+
+onTap: sale.saleStatus == 'voided'
+    ? null
+    : () {
+        showDialog(
+          context: context,
+          builder: (_) => TransactionDetailsDialog(
+            sale: sale,
+
+            // MARK AS PAID — FIXED FLOW
+            onMarkAsPaid: sale.paymentStatus.toUpperCase() == 'PENDING'
+                ? () async {
+                    await ref
+                        .read(paymentsNotifierProvider.notifier)
+                        .markPaymentAsPaid(sale.id);
+
+                    await ref
+                        .read(salesNotifierProvider.notifier)
+                        .fetchAdminSales();
+
+                    Navigator.of(context).pop();
+                  }
+                : null,
+
+            // CANCEL SALE — HARD STOP AFTER VOID
+            onCancelSale: sale.saleStatus == 'voided'
+                ? null
+                : () async {
                     await ref
                         .read(salesNotifierProvider.notifier)
                         .voidSale(sale.id);
 
                     Navigator.of(context).pop();
-                    // onRefresh();
                   },
-                ),
-              );
-            },
+          ),
+        );
+      },
+
+
+
+
+
+
+
       child: Container(
         margin: const EdgeInsets.only(bottom: 16),
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
