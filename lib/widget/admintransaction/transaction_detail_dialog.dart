@@ -5,14 +5,25 @@ import 'package:shopx/domain/sales/sale.dart';
 class TransactionDetailsDialog extends StatelessWidget {
   final Sale sale;
   final VoidCallback? onMarkAsPaid;
+  final VoidCallback? onCancelSale;
+
 
   const TransactionDetailsDialog({
     super.key,
     required this.sale,
     this.onMarkAsPaid,
+      this.onCancelSale, // 👈 ADD
   });
 
-  bool get _isPending => sale.paymentStatus.toUpperCase() == 'PENDING';
+  // bool get _isPending => sale.paymentStatus.toUpperCase() == 'PENDING';
+
+bool get _isPending =>
+    sale.paymentStatus.toUpperCase() == 'PENDING' &&
+    sale.saleStatus != 'voided';
+
+bool get _isVoided => sale.saleStatus == 'voided';
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -120,7 +131,16 @@ const SizedBox(height: 24),
 
             const SizedBox(height: 24),
 
-            if (_isPending) _markAsPaidButton(context),
+            // if (_isPending) _markAsPaidButton(context),
+
+            if (!_isVoided && _isPending) _markAsPaidButton(context),
+
+if (!_isVoided)
+  const SizedBox(height: 12),
+
+if (!_isVoided)
+  _cancelSaleButton(context),
+
           ],
         ),
       ),
@@ -207,43 +227,83 @@ const SizedBox(height: 24),
     );
   }
 
+
+
+
+
+
+
+
+
+
   // ================= STATUS CHIP =================
 
+  // Widget _statusChip() {
+  //   final status = sale.paymentStatus.toUpperCase();
+
+  //   Color bgColor;
+  //   switch (status) {
+  //     case 'PAID':
+  //       bgColor = const Color(0xFF1D72D6);
+  //       break;
+  //     case 'PENDING':
+  //       bgColor = const Color(0xFFF59E0B);
+  //       break;
+  //     case 'VOID':
+  //       bgColor = const Color(0xFF9CA3AF);
+  //       break;
+  //     default:
+  //       bgColor = const Color(0xFF1D72D6);
+  //   }
+
+  //   return Container(
+  //     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+  //     decoration: BoxDecoration(
+  //       color: bgColor,
+  //       borderRadius: BorderRadius.circular(12),
+  //     ),
+  //     child: Text(
+  //       status,
+  //       style: const TextStyle(
+  //         color: Colors.white,
+  //         fontSize: 12,
+  //         fontWeight: FontWeight.bold,
+  //         letterSpacing: 0.5,
+  //       ),
+  //     ),
+  //   );
+  // }
+
   Widget _statusChip() {
-    final status = sale.paymentStatus.toUpperCase();
+  final bool isVoided = sale.saleStatus == 'voided';
 
-    Color bgColor;
-    switch (status) {
-      case 'PAID':
-        bgColor = const Color(0xFF1D72D6);
-        break;
-      case 'PENDING':
-        bgColor = const Color(0xFFF59E0B);
-        break;
-      case 'VOID':
-        bgColor = const Color(0xFF9CA3AF);
-        break;
-      default:
-        bgColor = const Color(0xFF1D72D6);
-    }
+  final String label =
+      isVoided ? 'CANCELLED' : sale.paymentStatus.toUpperCase();
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(12),
+  final Color bgColor = isVoided
+      ? Colors.red
+      : sale.paymentStatus.toUpperCase() == 'PAID'
+          ? const Color(0xFF1D72D6)
+          : const Color(0xFFF59E0B);
+
+  return Container(
+    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+    decoration: BoxDecoration(
+      color: bgColor,
+      borderRadius: BorderRadius.circular(12),
+    ),
+    child: Text(
+      label,
+      style: const TextStyle(
+        color: Colors.white,
+        fontSize: 12,
+        fontWeight: FontWeight.bold,
+        letterSpacing: 0.5,
       ),
-      child: Text(
-        status,
-        style: const TextStyle(
-          color: Colors.white,
-          fontSize: 12,
-          fontWeight: FontWeight.bold,
-          letterSpacing: 0.5,
-        ),
-      ),
-    );
-  }
+    ),
+  );
+}
+
 
   // ================= MARK AS PAID =================
 
@@ -269,4 +329,33 @@ const SizedBox(height: 24),
       ),
     );
   }
+Widget _cancelSaleButton(BuildContext context) {
+  return SizedBox(
+    width: double.infinity,
+    child: ElevatedButton(
+      onPressed: () async {
+        if (onCancelSale != null) {
+           onCancelSale!();
+        }
+        Navigator.of(context).pop();
+      },
+      style: ElevatedButton.styleFrom(
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        backgroundColor: Colors.red,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+      ),
+      child: const Text(
+        "Cancel Sale",
+        style: TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    ),
+  );
+}
+
+
 }

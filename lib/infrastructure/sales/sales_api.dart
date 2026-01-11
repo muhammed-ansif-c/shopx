@@ -26,5 +26,10 @@ Future<List<dynamic>> getMySales() async {
   return res.data;
 }
 
+Future<void> voidSale(int saleId) async {
+  await _dio.post("/sales/$saleId/void");
+}
+
+
 
 }
