@@ -1,11 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_hooks/flutter_hooks.dart'; 
+import 'package:hooks_riverpod/hooks_riverpod.dart'; 
 import 'package:intl/intl.dart';
+import 'package:shopx/core/constants.dart';
 import 'package:shopx/domain/sales/sale.dart';
 
-class TransactionDetailsDialog extends StatelessWidget {
+class TransactionDetailsDialog extends HookConsumerWidget {
   final Sale sale;
-  final VoidCallback? onMarkAsPaid;
-  final VoidCallback? onCancelSale;
+  // final VoidCallback? onMarkAsPaid;
+  // final VoidCallback? onCancelSale;
+  final Future<void> Function()? onMarkAsPaid;
+final Future<void> Function()? onCancelSale;
+
 
   const TransactionDetailsDialog({
     super.key,
@@ -21,9 +27,11 @@ class TransactionDetailsDialog extends StatelessWidget {
       sale.saleStatus != 'voided';
 
   bool get _isVoided => sale.saleStatus == 'voided';
+@override
+Widget build(BuildContext context, WidgetRef ref) {
+  final isSubmitting = useState(false);
 
-  @override
-  Widget build(BuildContext context) {
+    
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       insetPadding: const EdgeInsets.all(16),
@@ -119,9 +127,14 @@ class TransactionDetailsDialog extends StatelessWidget {
             const SizedBox(height: 24),
 
             // if (_isPending) _markAsPaidButton(context),
-            if (!_isVoided && _isPending) _markAsPaidButton(context),
+           if (!_isVoided && _isPending)
+  _markAsPaidButton(context, isSubmitting),
 
-            if (!_isVoided) const SizedBox(height: 12),
+  kHeight20,
+
+if (!_isVoided && onCancelSale != null)
+  _cancelSaleButton(context, isSubmitting),
+
 
             if (_isVoided)
               const Text(
@@ -276,34 +289,55 @@ class TransactionDetailsDialog extends StatelessWidget {
 
   // ================= MARK AS PAID =================
 
-  Widget _markAsPaidButton(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      child: ElevatedButton(
-        onPressed: onMarkAsPaid,
-        style: ElevatedButton.styleFrom(
-          padding: const EdgeInsets.symmetric(vertical: 14),
-          backgroundColor: const Color(0xFF1D72D6),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-        child: const Text(
-          "Mark as Paid",
-          style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-        ),
-      ),
-    );
-  }
-
- Widget _cancelSaleButton(BuildContext context) {
+ Widget _markAsPaidButton(
+  BuildContext context,
+  ValueNotifier<bool> isSubmitting,
+) {
   return SizedBox(
     width: double.infinity,
     child: ElevatedButton(
-      onPressed: onCancelSale == null
+      onPressed: isSubmitting.value || onMarkAsPaid == null
           ? null
           : () async {
-               onCancelSale!();
+              isSubmitting.value = true;
+            await   onMarkAsPaid!();
+            },
+      style: ElevatedButton.styleFrom(
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        backgroundColor: const Color(0xFF1D72D6),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+      ),
+      child: isSubmitting.value
+          ? const SizedBox(
+              height: 20,
+              width: 20,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: Colors.white,
+              ),
+            )
+          : const Text(
+              "Mark as Paid",
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold,color: Colors.white),
+            ),
+    ),
+  );
+}
+
+Widget _cancelSaleButton(
+  BuildContext context,
+  ValueNotifier<bool> isSubmitting,
+) {
+  return SizedBox(
+    width: double.infinity,
+    child: ElevatedButton(
+      onPressed: isSubmitting.value || onCancelSale == null
+          ? null
+          : () async {
+              isSubmitting.value = true;
+           await    onCancelSale!();
             },
       style: ElevatedButton.styleFrom(
         padding: const EdgeInsets.symmetric(vertical: 14),
@@ -312,10 +346,19 @@ class TransactionDetailsDialog extends StatelessWidget {
           borderRadius: BorderRadius.circular(12),
         ),
       ),
-      child: const Text(
-        "Cancel Sale",
-        style: TextStyle(fontWeight: FontWeight.bold),
-      ),
+      child: isSubmitting.value
+          ? const SizedBox(
+              height: 20,
+              width: 20,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: Colors.white,
+              ),
+            )
+          : const Text(
+              "Cancel Sale",
+              style: TextStyle(fontWeight: FontWeight.bold,color: Colors.white),
+            ),
     ),
   );
 }

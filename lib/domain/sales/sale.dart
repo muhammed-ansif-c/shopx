@@ -104,7 +104,7 @@ class Sale {
     totalAmount: double.tryParse(saleData["total_amount"].toString()) ?? 0,
     paymentStatus: saleData["payment_status"] ?? "paid",
     saleDate: DateTime.tryParse(saleData["sale_date"]) ?? DateTime.now(),
-    saleStatus: saleData["sale_status"] ?? "completed", // <-- ADD
+saleStatus: (saleData["sale_status"] ?? "completed").toLowerCase(),
   );
 }
 

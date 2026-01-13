@@ -28,7 +28,7 @@ class AdminTransactionHistoryPage extends HookConsumerWidget {
     final filter = useState<TransactionFilterResult?>(null);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -107,10 +107,20 @@ class AdminTransactionHistoryPage extends HookConsumerWidget {
       }
 
       // Status filter
+      // if (filter.status != 'ALL') {
+      //   filteredSales = filteredSales
+      //       .where((s) => s.paymentStatus.toUpperCase() == filter.status)
+      //       .toList();
+      // }
+
       if (filter.status != 'ALL') {
-        filteredSales = filteredSales
-            .where((s) => s.paymentStatus.toUpperCase() == filter.status)
-            .toList();
+        filteredSales = filteredSales.where((s) {
+          if (filter.status == 'CANCELLED') {
+            return s.saleStatus == 'voided';
+          }
+          return s.saleStatus != 'voided' &&
+              s.paymentStatus.toUpperCase() == filter.status;
+        }).toList();
       }
 
       // From date
@@ -150,14 +160,13 @@ class AdminTransactionHistoryPage extends HookConsumerWidget {
         //           (sum, sale) => sum + sale.totalAmount,
         //         );
 
-       final dailyTotal = dailySales
-    .where(
-      (s) =>
-          s.paymentStatus.toUpperCase() == 'PAID' &&
-          s.saleStatus != 'voided',
-    )
-    .fold<double>(0, (sum, sale) => sum + sale.totalAmount);
-
+        final dailyTotal = dailySales
+            .where(
+              (s) =>
+                  s.paymentStatus.toUpperCase() == 'PAID' &&
+                  s.saleStatus != 'voided',
+            )
+            .fold<double>(0, (sum, sale) => sum + sale.totalAmount);
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -248,50 +257,50 @@ class AdminTransactionHistoryPage extends HookConsumerWidget {
     return InkWell(
       borderRadius: BorderRadius.circular(20),
 
-
-
-onTap: sale.saleStatus == 'voided'
-    ? null
-    : () {
+      onTap: () {
         showDialog(
           context: context,
           builder: (_) => TransactionDetailsDialog(
             sale: sale,
 
-            // MARK AS PAID — FIXED FLOW
-            onMarkAsPaid: sale.paymentStatus.toUpperCase() == 'PENDING'
-                ? () async {
-                    await ref
-                        .read(paymentsNotifierProvider.notifier)
-                        .markPaymentAsPaid(sale.id);
+          onMarkAsPaid:
+    sale.paymentStatus.toUpperCase() == 'PENDING' &&
+            sale.saleStatus != 'voided'
+        ? () async {
+            await ref
+                .read(paymentsNotifierProvider.notifier)
+                .markPaymentAsPaid(sale.id);
 
-                    await ref
-                        .read(salesNotifierProvider.notifier)
-                        .fetchAdminSales();
+            // ✅ CLOSE DIALOG FIRST
+            Navigator.of(context).pop();
 
-                    Navigator.of(context).pop();
-                  }
-                : null,
+            // ✅ REFRESH LIST AFTER
+            await ref
+                .read(salesNotifierProvider.notifier)
+                .fetchAdminSales();
+          }
+        : null,
 
-            // CANCEL SALE — HARD STOP AFTER VOID
-            onCancelSale: sale.saleStatus == 'voided'
-                ? null
-                : () async {
-                    await ref
-                        .read(salesNotifierProvider.notifier)
-                        .voidSale(sale.id);
 
-                    Navigator.of(context).pop();
-                  },
+          onCancelSale: sale.saleStatus != 'voided'
+    ? () async {
+        await ref
+            .read(salesNotifierProvider.notifier)
+            .voidSale(sale.id);
+
+        // ✅ CLOSE DIALOG FIRST
+        Navigator.of(context).pop();
+
+        // ✅ REFRESH LIST AFTER
+        await ref
+            .read(salesNotifierProvider.notifier)
+            .fetchAdminSales();
+      }
+    : null,
+
           ),
         );
       },
-
-
-
-
-
-
 
       child: Container(
         margin: const EdgeInsets.only(bottom: 16),
@@ -363,14 +372,25 @@ onTap: sale.saleStatus == 'voided'
 
   // ================= STATUS COLOR =================
 
+  // Color _getStatusColor(String status) {
+  //   switch (status.toUpperCase()) {
+  //     case 'PAID':
+  //       return const Color(0xFF1D72D6);
+  //     case 'PENDING':
+  //       return const Color(0xFFF59E0B);
+  //     case 'VOID':
+  //       return const Color(0xFF9CA3AF);
+  //     default:
+  //       return const Color(0xFF1D72D6);
+  //   }
+  // }
+
   Color _getStatusColor(String status) {
     switch (status.toUpperCase()) {
       case 'PAID':
         return const Color(0xFF1D72D6);
       case 'PENDING':
         return const Color(0xFFF59E0B);
-      case 'VOID':
-        return const Color(0xFF9CA3AF);
       default:
         return const Color(0xFF1D72D6);
     }
