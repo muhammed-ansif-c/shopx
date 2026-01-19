@@ -674,8 +674,6 @@ class PdfReceiptService {
 
 */
 
-
-
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/services.dart';
@@ -701,9 +699,9 @@ class PdfReceiptService {
   static Future<File> generateReceiptPdf(ReceiptData receipt) async {
     final pdf = pw.Document();
 
-    final regularFont =
+    final regular =
         pw.Font.ttf(await rootBundle.load('assets/fonts/Cairo-Regular.ttf'));
-    final boldFont =
+    final bold =
         pw.Font.ttf(await rootBundle.load('assets/fonts/Cairo-Bold.ttf'));
 
     final logo = pw.MemoryImage(
@@ -714,7 +712,7 @@ class PdfReceiptService {
 
     final date = receipt.invoiceDate.toString().split(' ').first;
 
-    final qrData = _generateZatcaQr(
+    final qrData = _zatcaQr(
       sellerName: CompanyFixedData.companyNameEn,
       vatNumber: CompanyFixedData.vatNumber,
       invoiceDate: receipt.invoiceDate,
@@ -726,189 +724,184 @@ class PdfReceiptService {
       pw.Page(
         pageFormat: PdfPageFormat.a4,
         margin: const pw.EdgeInsets.all(20),
-        build: (_) {
-          return pw.Directionality(
-            textDirection: pw.TextDirection.rtl,
-            child: pw.Column(
-              crossAxisAlignment: pw.CrossAxisAlignment.stretch,
-              children: [
-                pw.Center(
-                  child: pw.Text(
-                    'Tax Invoice\nفاتورة ضريبية',
-                    textAlign: pw.TextAlign.center,
-                    style: pw.TextStyle(font: boldFont, fontSize: 15),
+        build: (_) => pw.Directionality(
+          textDirection: pw.TextDirection.rtl,
+          child: pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+            children: [
+              pw.Center(
+                child: pw.Text(
+                  'Tax Invoice\nفاتورة ضريبية',
+                  textAlign: pw.TextAlign.center,
+                  style: pw.TextStyle(font: bold, fontSize: 15),
+                ),
+              ),
+              pw.SizedBox(height: 10),
+
+              // ================= HEADER =================
+              pw.Table(
+                border: pw.TableBorder.all(),
+                columnWidths: {
+                  0: const pw.FlexColumnWidth(3),
+                  1: const pw.FixedColumnWidth(90),
+                  2: const pw.FlexColumnWidth(3),
+                },
+                children: [
+                  pw.TableRow(
+                    children: [
+                      _header(
+                        bold,
+                        CompanyFixedData.companyNameEn,
+                        CompanyFixedData.businessEn,
+                        'VAT No: ${CompanyFixedData.vatNumber}\nCR No: ${CompanyFixedData.crNumber}',
+                      ),
+                      pw.Center(
+                        child: pw.Image(logo, width: 70, height: 70),
+                      ),
+                      _header(
+                        bold,
+                        CompanyFixedData.companyNameAr,
+                        CompanyFixedData.businessAr,
+                        'الرقم الضريبي: ${CompanyFixedData.vatNumber}\nالسجل التجاري: ${CompanyFixedData.crNumber}',
+                        end: true,
+                      ),
+                    ],
                   ),
-                ),
-                pw.SizedBox(height: 10),
+                ],
+              ),
 
-                // ================= HEADER =================
-                pw.Table(
-                  border: pw.TableBorder.all(),
-                  columnWidths: {
-                    0: const pw.FlexColumnWidth(3),
-                    1: const pw.FixedColumnWidth(90),
-                    2: const pw.FlexColumnWidth(3),
-                  },
-                  children: [
-                    pw.TableRow(
-                      children: [
-                        _headerCell(
-                          boldFont,
-                          CompanyFixedData.companyNameEn,
-                          CompanyFixedData.businessEn,
-                          'VAT No: ${CompanyFixedData.vatNumber}\nCR No: ${CompanyFixedData.crNumber}',
+              pw.SizedBox(height: 10),
+
+              // ================= INFO TABLE =================
+              pw.Table(
+                border: pw.TableBorder.all(),
+                columnWidths: {
+                  0: const pw.FixedColumnWidth(85),
+                  1: const pw.FlexColumnWidth(),
+                  2: const pw.FixedColumnWidth(85),
+                  3: const pw.FlexColumnWidth(),
+                },
+                children: [
+                  _row(regular, 'Vendor', CompanyFixedData.companyNameEn,
+                      'اسم المورد', CompanyFixedData.companyNameAr),
+                  _row(regular, 'Inv No', receipt.invoiceNumber,
+                      'رقم الفاتورة', receipt.invoiceNumber),
+                  _row(regular, 'Inv Date', date,
+                      'تاريخ الإصدار', date),
+                  _row(regular, 'Delivery Date', date,
+                      'تاريخ التوريد', date),
+                  _row(regular, 'Due Date', date,
+                      'تاريخ الاستحقاق', date),
+                  _row(regular, 'VAT No', CompanyFixedData.vatNumber,
+                      'الرقم الضريبي', CompanyFixedData.vatNumber),
+                  _row(regular, 'Customer', receipt.customerName,
+                      'اسم العميل', receipt.customerName),
+                  _row(
+                    regular,
+                    'Address',
+                    receipt.customerAddress ?? '',
+                    'العنوان',
+                    receipt.customerAddress ?? '',
+                  ),
+                ],
+              ),
+
+              pw.SizedBox(height: 10),
+
+              // ================= ITEMS =================
+              pw.Table(
+                border: pw.TableBorder.all(),
+                columnWidths: {
+                  0: const pw.FixedColumnWidth(30),
+                  1: const pw.FlexColumnWidth(4),
+                  2: const pw.FixedColumnWidth(45),
+                  3: const pw.FixedColumnWidth(60),
+                  4: const pw.FixedColumnWidth(45),
+                  5: const pw.FixedColumnWidth(70),
+                },
+                children: [
+                  pw.TableRow(
+                    decoration:
+                        const pw.BoxDecoration(color: PdfColors.grey300),
+                    children: [
+                      _cell(bold, 'S'),
+                      _cell(bold, 'Description\nالبيان'),
+                      _cell(bold, 'Qty\nالعدد'),
+                      _cell(bold, 'Price'),
+                      _cell(bold, 'VAT'),
+                      _cell(bold, 'Amount'),
+                    ],
+                  ),
+                  ...receipt.items.asMap().entries.map((e) {
+                    final i = e.key + 1;
+                    final item = e.value;
+                    final total = item.unitPrice * item.quantity;
+                    final vat = total * receipt.vatPercentage / 100;
+
+                    return pw.TableRow(children: [
+                      _cell(regular, '$i'),
+                      _cell(
+                        regular,
+                        item.nameAr?.isNotEmpty == true
+                            ? '${item.nameEn}\n${item.nameAr}'
+                            : item.nameEn,
+                      ),
+                      _cell(regular, '${item.quantity}'),
+                      _cell(regular, item.unitPrice.toStringAsFixed(2)),
+                      _cell(regular, vat.toStringAsFixed(2)),
+                      _cell(regular, total.toStringAsFixed(2)),
+                    ]);
+                  }),
+                ],
+              ),
+
+              pw.SizedBox(height: 10),
+
+              // ================= TOTAL + QR =================
+              pw.Table(
+                border: pw.TableBorder.all(),
+                columnWidths: {
+                  0: const pw.FixedColumnWidth(140),
+                  1: const pw.FlexColumnWidth(),
+                },
+                children: [
+                  pw.TableRow(
+                    children: [
+                      pw.Padding(
+                        padding: const pw.EdgeInsets.all(8),
+                        child: pw.BarcodeWidget(
+                          barcode: pw.Barcode.qrCode(),
+                          data: qrData,
+                          width: 120,
+                          height: 120,
                         ),
-                        pw.Center(
-                          child: pw.Image(logo, width: 70, height: 70),
-                        ),
-                        _headerCell(
-                          boldFont,
-                          CompanyFixedData.companyNameAr,
-                          CompanyFixedData.businessAr,
-                          'الرقم الضريبي: ${CompanyFixedData.vatNumber}\nالسجل التجاري: ${CompanyFixedData.crNumber}',
-                          alignEnd: true,
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-
-                pw.SizedBox(height: 10),
-
-                // ================= INFO TABLE =================
-                pw.Table(
-                  border: pw.TableBorder.all(),
-                  columnWidths: {
-                    0: const pw.FixedColumnWidth(90),
-                    1: const pw.FlexColumnWidth(),
-                    2: const pw.FixedColumnWidth(90),
-                    3: const pw.FlexColumnWidth(),
-                  },
-                  children: [
-                    _infoRow(regularFont, 'Vendor', CompanyFixedData.companyNameEn,
-                        'اسم المورد', CompanyFixedData.companyNameAr),
-                    _infoRow(regularFont, 'Inv No', receipt.invoiceNumber,
-                        'رقم الفاتورة', receipt.invoiceNumber),
-                    _infoRow(
-                        regularFont, 'Inv Date', date, 'تاريخ الإصدار', date),
-                    _infoRow(regularFont, 'Delivery Date', date,
-                        'تاريخ التوريد', date),
-                    _infoRow(regularFont, 'Due Date', date,
-                        'تاريخ الاستحقاق', date),
-                    _infoRow(regularFont, 'VAT No',
-                        CompanyFixedData.vatNumber, 'الرقم الضريبي',
-                        CompanyFixedData.vatNumber),
-                    _infoRow(regularFont, 'Customer', receipt.customerName,
-                        'اسم العميل', receipt.customerName),
-                    if (receipt.customerAddress?.isNotEmpty == true)
-                      _infoRow(regularFont, 'Address',
-                          receipt.customerAddress!, 'العنوان',
-                          receipt.customerAddress!),
-                    if (receipt.customerPhone?.isNotEmpty == true)
-                      _infoRow(regularFont, 'Phone', receipt.customerPhone!,
-                          'الهاتف', receipt.customerPhone!),
-                  ],
-                ),
-
-                pw.SizedBox(height: 10),
-
-                // ================= ITEMS =================
-                pw.Table(
-                  border: pw.TableBorder.all(),
-                  columnWidths: {
-                    0: const pw.FixedColumnWidth(30),
-                    1: const pw.FlexColumnWidth(4),
-                    2: const pw.FixedColumnWidth(45),
-                    3: const pw.FixedColumnWidth(60),
-                    4: const pw.FixedColumnWidth(45),
-                    5: const pw.FixedColumnWidth(70),
-                  },
-                  children: [
-                    pw.TableRow(
-                      decoration:
-                          const pw.BoxDecoration(color: PdfColors.grey300),
-                      children: [
-                        _cell(boldFont, 'S'),
-                        _cell(boldFont, 'Description\nالبيان'),
-                        _cell(boldFont, 'Qty\nالعدد'),
-                        _cell(boldFont, 'Price'),
-                        _cell(boldFont, 'VAT'),
-                        _cell(boldFont, 'Amount'),
-                      ],
-                    ),
-                    ...receipt.items.asMap().entries.map((e) {
-                      final i = e.key + 1;
-                      final item = e.value;
-                      final total = item.unitPrice * item.quantity;
-                      final vat = total * receipt.vatPercentage / 100;
-
-                      return pw.TableRow(children: [
-                        _cell(regularFont, '$i'),
-                        _cell(
-                          regularFont,
-                          item.nameAr?.isNotEmpty == true
-                              ? '${item.nameEn}\n${item.nameAr}'
-                              : item.nameEn,
-                        ),
-                        _cell(regularFont, '${item.quantity}'),
-                        _cell(regularFont,
-                            item.unitPrice.toStringAsFixed(2)),
-                        _cell(regularFont, vat.toStringAsFixed(2)),
-                        _cell(regularFont, total.toStringAsFixed(2)),
-                      ]);
-                    }),
-                  ],
-                ),
-
-                pw.SizedBox(height: 10),
-
-                // ================= TOTAL + QR =================
-                pw.Table(
-                  border: pw.TableBorder.all(),
-                  columnWidths: {
-                    0: const pw.FixedColumnWidth(140),
-                    1: const pw.FlexColumnWidth(),
-                  },
-                  children: [
-                    pw.TableRow(
-                      children: [
-                        pw.Padding(
-                          padding: const pw.EdgeInsets.all(8),
-                          child: pw.BarcodeWidget(
-                            barcode: pw.Barcode.qrCode(),
-                            data: qrData,
-                            width: 120,
-                            height: 120,
-                          ),
-                        ),
-                        pw.Table(
-                          border: pw.TableBorder.all(),
-                          children: [
-                            _totalRow(regularFont,
-                                'Taxable Amount\nالمبلغ الخاضع للضريبة',
-                                receipt.subTotal),
-                            _totalRow(regularFont, 'Discount\nالخصم',
-                                receipt.discount ?? 0),
-                            _totalRow(regularFont,
-                                'Amount After Discount\nالمبلغ بعد الخصم',
-                                receipt.subTotal -
-                                    (receipt.discount ?? 0)),
-                            _totalRow(regularFont,
-                                'VAT ${receipt.vatPercentage}%',
-                                receipt.vatAmount),
-                            _totalRow(boldFont,
-                                'Total Amount with VAT\nإجمالي المبلغ مع الضريبة',
-                                receipt.netTotal),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          );
-        },
+                      ),
+                      pw.Table(
+                        border: pw.TableBorder.all(),
+                        children: [
+                          _total(regular,
+                              'Taxable Amount\nالمبلغ الخاضع للضريبة',
+                              receipt.subTotal),
+                          _total(regular, 'Discount\nالخصم',
+                              receipt.discount ?? 0),
+                          _total(regular,
+                              'Amount After Discount\nالمبلغ بعد الخصم',
+                              receipt.subTotal - (receipt.discount ?? 0)),
+                          _total(regular,
+                              'VAT ${receipt.vatPercentage}%',
+                              receipt.vatAmount),
+                          _total(bold,
+                              'Total Amount with VAT\nإجمالي المبلغ مع الضريبة',
+                              receipt.netTotal),
+                        ],
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
       ),
     );
 
@@ -920,33 +913,36 @@ class PdfReceiptService {
 
   // ================= HELPERS =================
 
-  static pw.Widget _headerCell(
+  static pw.Widget _header(
     pw.Font font,
     String title,
-    String subtitle,
+    String body,
     String footer, {
-    bool alignEnd = false,
+    bool end = false,
   }) {
     return pw.Padding(
       padding: const pw.EdgeInsets.all(6),
       child: pw.Column(
         crossAxisAlignment:
-            alignEnd ? pw.CrossAxisAlignment.end : pw.CrossAxisAlignment.start,
+            end ? pw.CrossAxisAlignment.end : pw.CrossAxisAlignment.start,
         children: [
           pw.Text(title, style: pw.TextStyle(font: font, fontSize: 10)),
           pw.SizedBox(height: 2),
-          pw.Text(subtitle,
-              style: pw.TextStyle(font: font, fontSize: 8)),
+          pw.Text(body, style: pw.TextStyle(font: font, fontSize: 8)),
           pw.SizedBox(height: 4),
-          pw.Text(footer,
-              style: pw.TextStyle(font: font, fontSize: 8)),
+          pw.Text(footer, style: pw.TextStyle(font: font, fontSize: 8)),
         ],
       ),
     );
   }
 
-  static pw.TableRow _infoRow(pw.Font font, String enLabel, String enValue,
-      String arLabel, String arValue) {
+  static pw.TableRow _row(
+    pw.Font font,
+    String enLabel,
+    String enValue,
+    String arLabel,
+    String arValue,
+  ) {
     return pw.TableRow(children: [
       _cell(font, enLabel),
       _cell(font, enValue),
@@ -962,15 +958,14 @@ class PdfReceiptService {
     );
   }
 
-  static pw.TableRow _totalRow(
-      pw.Font font, String label, double value) {
+  static pw.TableRow _total(pw.Font font, String label, double value) {
     return pw.TableRow(children: [
       _cell(font, label),
       _cell(font, value.toStringAsFixed(2)),
     ]);
   }
 
-  static String _generateZatcaQr({
+  static String _zatcaQr({
     required String sellerName,
     required String vatNumber,
     required DateTime invoiceDate,
@@ -981,9 +976,7 @@ class PdfReceiptService {
 
     void add(int tag, String value) {
       final v = value.codeUnits;
-      bytes.add(tag);
-      bytes.add(v.length);
-      bytes.addAll(v);
+      bytes..add(tag)..add(v.length)..addAll(v);
     }
 
     add(1, sellerName);
@@ -995,4 +988,3 @@ class PdfReceiptService {
     return base64Encode(bytes);
   }
 }
-
