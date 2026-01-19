@@ -159,68 +159,95 @@ class PdfReceiptService {
                 //     ),
                 //   ],
                 // ),
-                pw.Row(
-                  crossAxisAlignment: pw.CrossAxisAlignment.start,
+                pw.Table(
+                  border: pw.TableBorder.all(),
+                  columnWidths: {
+                    0: const pw.FlexColumnWidth(3),
+                    1: const pw.FixedColumnWidth(90),
+                    2: const pw.FlexColumnWidth(3),
+                  },
                   children: [
-                    // LEFT — ENGLISH
-                    pw.Expanded(
-                      child: pw.Column(
-                        crossAxisAlignment: pw.CrossAxisAlignment.start,
-                        children: [
-                          pw.Text(
-                            CompanyFixedData.companyNameEn,
-                            style: pw.TextStyle(
-                              font: arabicFontBold,
-                              fontSize: 10,
-                            ),
+                    pw.TableRow(
+                      children: [
+                        // LEFT — ENGLISH
+                        pw.Padding(
+                          padding: const pw.EdgeInsets.all(6),
+                          child: pw.Column(
+                            crossAxisAlignment: pw.CrossAxisAlignment.start,
+                            children: [
+                              pw.Text(
+                                CompanyFixedData.companyNameEn,
+                                style: pw.TextStyle(
+                                  font: arabicFontBold,
+                                  fontSize: 10,
+                                ),
+                              ),
+                              pw.Text(
+                                CompanyFixedData.businessEn,
+                                style: pw.TextStyle(
+                                  font: arabicFont,
+                                  fontSize: 9,
+                                ),
+                              ),
+                              pw.SizedBox(height: 6),
+                              pw.Text(
+                                'VAT No: ${CompanyFixedData.vatNumber}',
+                                style: pw.TextStyle(
+                                  font: arabicFont,
+                                  fontSize: 9,
+                                ),
+                              ),
+                              pw.Text(
+                                'CR No: ${CompanyFixedData.crNumber}',
+                                style: pw.TextStyle(
+                                  font: arabicFont,
+                                  fontSize: 9,
+                                ),
+                              ),
+                            ],
                           ),
-                          pw.Text(
-                            CompanyFixedData.businessEn,
-                            style: pw.TextStyle(font: arabicFont, fontSize: 9),
-                          ),
-                          pw.SizedBox(height: 6),
-                          pw.Text(
-                            'VAT No: ${CompanyFixedData.vatNumber}',
-                            style: pw.TextStyle(font: arabicFont, fontSize: 9),
-                          ),
-                          pw.Text(
-                            'CR No: ${CompanyFixedData.crNumber}',
-                            style: pw.TextStyle(font: arabicFont, fontSize: 9),
-                          ),
-                        ],
-                      ),
-                    ),
+                        ),
 
-                    // CENTER — LOGO
-                    pw.Container(
-                      width: 70,
-                      height: 70,
-                      child: pw.Image(logoImage, fit: pw.BoxFit.contain),
-                    ),
+                        // CENTER — LOGO
+                        pw.Center(
+                          child: pw.Image(
+                            logoImage,
+                            width: 70,
+                            height: 70,
+                            fit: pw.BoxFit.contain,
+                          ),
+                        ),
 
-                    // RIGHT — ARABIC
-                    pw.Expanded(
-                      child: pw.Column(
-                        crossAxisAlignment: pw.CrossAxisAlignment.end,
-                        children: [
-                          pw.Text(
-                            CompanyFixedData.companyNameAr,
-                            style: pw.TextStyle(
-                              font: arabicFontBold,
-                              fontSize: 10,
-                            ),
-                            textDirection: pw.TextDirection.rtl,
+                        // RIGHT — ARABIC
+                        pw.Padding(
+                          padding: const pw.EdgeInsets.all(6),
+                          child: pw.Column(
+                            crossAxisAlignment: pw.CrossAxisAlignment.end,
+                            children: [
+                              pw.Text(
+                                CompanyFixedData.companyNameAr,
+                                style: pw.TextStyle(
+                                  font: arabicFontBold,
+                                  fontSize: 10,
+                                ),
+                                textDirection: pw.TextDirection.rtl,
+                              ),
+                              pw.Text(
+                                CompanyFixedData.businessAr,
+                                style: pw.TextStyle(
+                                  font: arabicFont,
+                                  fontSize: 9,
+                                ),
+                                textDirection: pw.TextDirection.rtl,
+                              ),
+                            ],
                           ),
-                          pw.Text(
-                            CompanyFixedData.businessAr,
-                            style: pw.TextStyle(font: arabicFont, fontSize: 9),
-                            textDirection: pw.TextDirection.rtl,
-                          ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
+
                 pw.SizedBox(height: 16),
 
                 // ================= INVOICE INFO TABLE (MODEL MATCH) =================
@@ -404,78 +431,134 @@ class PdfReceiptService {
                 // =========================================================
                 // TOTALS + QR
                 // =========================================================
-                pw.Row(
-                  crossAxisAlignment: pw.CrossAxisAlignment.start,
+
+                // pw.Row(
+                //   crossAxisAlignment: pw.CrossAxisAlignment.start,
+                //   children: [
+                //     // QR
+                //     pw.Expanded(
+                //       child: pw.BarcodeWidget(
+                //         barcode: pw.Barcode.qrCode(),
+                //         data: qrData,
+                //         width: 110,
+                //         height: 110,
+                //       ),
+                //     ),
+
+                //     // Totals
+                //     pw.Expanded(
+                //       child: pw.Table(
+                //         border: pw.TableBorder.all(),
+                //         children: [
+                //           //                         _totalRow(
+                //           //   arabicFont,
+                //           //   'Taxable Amount\nالمبلغ الخاضع للضريبة',
+                //           //    receipt.subTotal,
+                //           //   // receipt.subTotal - (receipt.discount ?? 0.0),
+                //           // ),
+
+                //           //                           _totalRow(
+                //           //                             arabicFont,
+                //           //                             'Discount\nالخصم',
+                //           //                             receipt.discount ?? 0.0,
+                //           //                           ),
+                //           //                           // _totalRow(
+                //           //                           //   arabicFont,
+                //           //                           //   'Amount After Discount\nالمبلغ بعد الخصم',
+                //           //                           //   receipt.subTotal - (receipt.discount ?? 0.0),
+                //           //                           // ),
+                //           //                           _totalRow(
+                //           //                             arabicFont,
+                //           //                             'VAT ${receipt.vatPercentage}%\nضريبة القيمة المضافة',
+                //           //                             receipt.vatAmount,
+                //           //                           ),
+                //           //                           _totalRow(
+                //           //                             arabicFontBold,
+                //           //                             'Total Amount with VAT\nإجمالي المبلغ مع الضريبة',
+                //           //                             receipt.netTotal,
+                //           //                           ),
+                //           _totalRow(
+                //             arabicFont,
+                //             'Taxable Amount\nالمبلغ الخاضع للضريبة',
+                //             receipt.subTotal,
+                //           ),
+                //           _totalRow(
+                //             arabicFont,
+                //             'Discount\nالخصم',
+                //             receipt.discount ?? 0.0,
+                //           ),
+                //           _totalRow(
+                //             arabicFont,
+                //             'Amount After Discount\nالمبلغ بعد الخصم',
+                //             receipt.subTotal - (receipt.discount ?? 0.0),
+                //           ),
+                //           _totalRow(
+                //             arabicFont,
+                //             'VAT ${receipt.vatPercentage}%\nضريبة القيمة المضافة',
+                //             receipt.vatAmount,
+                //           ),
+                //           _totalRow(
+                //             arabicFontBold,
+                //             'Total Amount with VAT\nإجمالي المبلغ مع الضريبة',
+                //             receipt.netTotal,
+                //           ),
+                //         ],
+                //       ),
+                //     ),
+                //   ],
+                // ),
+                pw.Table(
+                  border: pw.TableBorder.all(),
+                  columnWidths: {
+                    0: const pw.FixedColumnWidth(140),
+                    1: const pw.FlexColumnWidth(),
+                  },
                   children: [
-                    // QR
-                    pw.Expanded(
-                      child: pw.BarcodeWidget(
-                        barcode: pw.Barcode.qrCode(),
-                        data: qrData,
-                        width: 110,
-                        height: 110,
-                      ),
-                    ),
+                    pw.TableRow(
+                      children: [
+                        // QR CELL
+                        pw.Padding(
+                          padding: const pw.EdgeInsets.all(8),
+                          child: pw.BarcodeWidget(
+                            barcode: pw.Barcode.qrCode(),
+                            data: qrData,
+                            width: 120,
+                            height: 120,
+                          ),
+                        ),
 
-                    // Totals
-                    pw.Expanded(
-                      child: pw.Table(
-                        border: pw.TableBorder.all(),
-                        children: [
-                          //                         _totalRow(
-                          //   arabicFont,
-                          //   'Taxable Amount\nالمبلغ الخاضع للضريبة',
-                          //    receipt.subTotal,
-                          //   // receipt.subTotal - (receipt.discount ?? 0.0),
-                          // ),
-
-                          //                           _totalRow(
-                          //                             arabicFont,
-                          //                             'Discount\nالخصم',
-                          //                             receipt.discount ?? 0.0,
-                          //                           ),
-                          //                           // _totalRow(
-                          //                           //   arabicFont,
-                          //                           //   'Amount After Discount\nالمبلغ بعد الخصم',
-                          //                           //   receipt.subTotal - (receipt.discount ?? 0.0),
-                          //                           // ),
-                          //                           _totalRow(
-                          //                             arabicFont,
-                          //                             'VAT ${receipt.vatPercentage}%\nضريبة القيمة المضافة',
-                          //                             receipt.vatAmount,
-                          //                           ),
-                          //                           _totalRow(
-                          //                             arabicFontBold,
-                          //                             'Total Amount with VAT\nإجمالي المبلغ مع الضريبة',
-                          //                             receipt.netTotal,
-                          //                           ),
-                          _totalRow(
-                            arabicFont,
-                            'Taxable Amount\nالمبلغ الخاضع للضريبة',
-                            receipt.subTotal,
-                          ),
-                          _totalRow(
-                            arabicFont,
-                            'Discount\nالخصم',
-                            receipt.discount ?? 0.0,
-                          ),
-                          _totalRow(
-                            arabicFont,
-                            'Amount After Discount\nالمبلغ بعد الخصم',
-                            receipt.subTotal - (receipt.discount ?? 0.0),
-                          ),
-                          _totalRow(
-                            arabicFont,
-                            'VAT ${receipt.vatPercentage}%\nضريبة القيمة المضافة',
-                            receipt.vatAmount,
-                          ),
-                          _totalRow(
-                            arabicFontBold,
-                            'Total Amount with VAT\nإجمالي المبلغ مع الضريبة',
-                            receipt.netTotal,
-                          ),
-                        ],
-                      ),
+                        // TOTALS CELL
+                        pw.Table(
+                          border: pw.TableBorder.all(),
+                          children: [
+                            _totalRow(
+                              arabicFont,
+                              'Taxable Amount\nالمبلغ الخاضع للضريبة',
+                              receipt.subTotal,
+                            ),
+                            _totalRow(
+                              arabicFont,
+                              'Discount\nالخصم',
+                              receipt.discount ?? 0.0,
+                            ),
+                            _totalRow(
+                              arabicFont,
+                              'Amount After Discount\nالمبلغ بعد الخصم',
+                              receipt.subTotal - (receipt.discount ?? 0.0),
+                            ),
+                            _totalRow(
+                              arabicFont,
+                              'VAT ${receipt.vatPercentage}%\nضريبة القيمة المضافة',
+                              receipt.vatAmount,
+                            ),
+                            _totalRow(
+                              arabicFontBold,
+                              'Total Amount with VAT\nإجمالي المبلغ مع الضريبة',
+                              receipt.netTotal,
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
                   ],
                 ),
