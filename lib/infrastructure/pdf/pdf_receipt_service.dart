@@ -29,6 +29,12 @@ class PdfReceiptService {
       await rootBundle.load('assets/fonts/Cairo-Bold.ttf'),
     );
 
+    final logoImage = pw.MemoryImage(
+      (await rootBundle.load(
+        'assets/images/pdf_logo.png',
+      )).buffer.asUint8List(),
+    );
+
     final today = receipt.invoiceDate.toString().split(' ').first;
 
     final qrData = generateZatcaQr(
@@ -58,21 +64,109 @@ class PdfReceiptService {
                 ),
                 pw.SizedBox(height: 16),
 
+                // pw.Row(
+                //   crossAxisAlignment: pw.CrossAxisAlignment.start,
+                //   children: [
+                //     // LEFT: FIXED COMPANY INFO
+                //     pw.Expanded(
+                //       child: pw.Column(
+                //         crossAxisAlignment: pw.CrossAxisAlignment.start,
+                //         children: [
+                //           // pw.Text(
+                //           //   'JOYBREWS COFFEE MACHINES',
+                //           //   style: pw.TextStyle(
+                //           //     font: arabicFontBold,
+                //           //     fontSize: 9,
+                //           //   ),
+                //           // ),
+                //           pw.Text(
+                //             CompanyFixedData.companyNameEn,
+                //             style: pw.TextStyle(
+                //               font: arabicFontBold,
+                //               fontSize: 10,
+                //             ),
+                //           ),
+                //           pw.Text(
+                //             CompanyFixedData.companyNameAr,
+                //             style: pw.TextStyle(font: arabicFont, fontSize: 9),
+                //           ),
+                //           pw.SizedBox(height: 4),
+                //           pw.Text(
+                //             CompanyFixedData.businessEn,
+                //             style: pw.TextStyle(font: arabicFont, fontSize: 9),
+                //           ),
+                //           pw.Text(
+                //             CompanyFixedData.businessAr,
+                //             style: pw.TextStyle(font: arabicFont, fontSize: 9),
+                //           ),
+                //           pw.SizedBox(height: 6),
+                //           pw.Text(
+                //             'VAT No: ${CompanyFixedData.vatNumber}',
+                //             style: pw.TextStyle(font: arabicFont, fontSize: 9),
+                //           ),
+                //           pw.Text(
+                //             'CR No: ${CompanyFixedData.crNumber}',
+                //             style: pw.TextStyle(font: arabicFont, fontSize: 9),
+                //           ),
+                //         ],
+                //       ),
+                //     ),
+
+                //     pw.SizedBox(width: 12),
+
+                //     // RIGHT: INVOICE INFO
+                //     pw.Expanded(
+                //       child: pw.Table(
+                //         border: pw.TableBorder.all(),
+                //         children: [
+                //           _infoRow(
+                //             arabicFont,
+                //             'Inv No',
+                //             receipt.invoiceNumber,
+                //             'رقم الفاتورة',
+                //             receipt.invoiceNumber,
+                //           ),
+                //           _infoRow(
+                //             arabicFont,
+                //             'Inv Date',
+                //             today,
+                //             'تاريخ الإصدار',
+                //             today,
+                //           ),
+                //           _infoRow(
+                //             arabicFont,
+                //             'Delivery',
+                //             today,
+                //             'تاريخ التوريد',
+                //             today,
+                //           ),
+                //           _infoRow(
+                //             arabicFont,
+                //             'Due Date',
+                //             today,
+                //             'تاريخ الاستحقاق',
+                //             today,
+                //           ),
+                //           _infoRow(
+                //             arabicFont,
+                //             'Ref',
+                //             receipt.invoiceNumber,
+                //             'المرجع',
+                //             receipt.invoiceNumber,
+                //           ),
+                //         ],
+                //       ),
+                //     ),
+                //   ],
+                // ),
                 pw.Row(
                   crossAxisAlignment: pw.CrossAxisAlignment.start,
                   children: [
-                    // LEFT: FIXED COMPANY INFO
+                    // LEFT — ENGLISH
                     pw.Expanded(
                       child: pw.Column(
                         crossAxisAlignment: pw.CrossAxisAlignment.start,
                         children: [
-                          // pw.Text(
-                          //   'JOYBREWS COFFEE MACHINES',
-                          //   style: pw.TextStyle(
-                          //     font: arabicFontBold,
-                          //     fontSize: 9,
-                          //   ),
-                          // ),
                           pw.Text(
                             CompanyFixedData.companyNameEn,
                             style: pw.TextStyle(
@@ -81,16 +175,7 @@ class PdfReceiptService {
                             ),
                           ),
                           pw.Text(
-                            CompanyFixedData.companyNameAr,
-                            style: pw.TextStyle(font: arabicFont, fontSize: 9),
-                          ),
-                          pw.SizedBox(height: 4),
-                          pw.Text(
                             CompanyFixedData.businessEn,
-                            style: pw.TextStyle(font: arabicFont, fontSize: 9),
-                          ),
-                          pw.Text(
-                            CompanyFixedData.businessAr,
                             style: pw.TextStyle(font: arabicFont, fontSize: 9),
                           ),
                           pw.SizedBox(height: 6),
@@ -106,47 +191,30 @@ class PdfReceiptService {
                       ),
                     ),
 
-                    pw.SizedBox(width: 12),
+                    // CENTER — LOGO
+                    pw.Container(
+                      width: 70,
+                      height: 70,
+                      child: pw.Image(logoImage, fit: pw.BoxFit.contain),
+                    ),
 
-                    // RIGHT: INVOICE INFO
+                    // RIGHT — ARABIC
                     pw.Expanded(
-                      child: pw.Table(
-                        border: pw.TableBorder.all(),
+                      child: pw.Column(
+                        crossAxisAlignment: pw.CrossAxisAlignment.end,
                         children: [
-                          _infoRow(
-                            arabicFont,
-                            'Inv No',
-                            receipt.invoiceNumber,
-                            'رقم الفاتورة',
-                            receipt.invoiceNumber,
+                          pw.Text(
+                            CompanyFixedData.companyNameAr,
+                            style: pw.TextStyle(
+                              font: arabicFontBold,
+                              fontSize: 10,
+                            ),
+                            textDirection: pw.TextDirection.rtl,
                           ),
-                          _infoRow(
-                            arabicFont,
-                            'Inv Date',
-                            today,
-                            'تاريخ الإصدار',
-                            today,
-                          ),
-                          _infoRow(
-                            arabicFont,
-                            'Delivery',
-                            today,
-                            'تاريخ التوريد',
-                            today,
-                          ),
-                          _infoRow(
-                            arabicFont,
-                            'Due Date',
-                            today,
-                            'تاريخ الاستحقاق',
-                            today,
-                          ),
-                          _infoRow(
-                            arabicFont,
-                            'Ref',
-                            receipt.invoiceNumber,
-                            'المرجع',
-                            receipt.invoiceNumber,
+                          pw.Text(
+                            CompanyFixedData.businessAr,
+                            style: pw.TextStyle(font: arabicFont, fontSize: 9),
+                            textDirection: pw.TextDirection.rtl,
                           ),
                         ],
                       ),
@@ -155,46 +223,112 @@ class PdfReceiptService {
                 ),
                 pw.SizedBox(height: 16),
 
-              pw.Table(
-  border: pw.TableBorder.all(),
-  children: [
-    _infoRow(
-      arabicFont,
-      'Customer',
-      receipt.customerName,
-      'اسم العميل',
-      receipt.customerName,
-    ),
+                // ================= INVOICE INFO TABLE (MODEL MATCH) =================
+                pw.Table(
+                  border: pw.TableBorder.all(),
+                  columnWidths: {
+                    0: const pw.FixedColumnWidth(80),
+                    1: const pw.FlexColumnWidth(2),
+                    2: const pw.FixedColumnWidth(80),
+                    3: const pw.FlexColumnWidth(2),
+                  },
+                  children: [
+                    _infoRow(
+                      arabicFont,
+                      'Vendor',
+                      CompanyFixedData.companyNameEn,
+                      'اسم المورد',
+                      CompanyFixedData.companyNameAr,
+                    ),
+                    _infoRow(
+                      arabicFont,
+                      'Inv No',
+                      receipt.invoiceNumber,
+                      'رقم الفاتورة',
+                      receipt.invoiceNumber,
+                    ),
+                    _infoRow(
+                      arabicFont,
+                      'Inv Date',
+                      today,
+                      'تاريخ الإصدار',
+                      today,
+                    ),
+                    _infoRow(
+                      arabicFont,
+                      'Delivery Date',
+                      today,
+                      'تاريخ التوريد',
+                      today,
+                    ),
+                    _infoRow(
+                      arabicFont,
+                      'Due Date',
+                      today,
+                      'تاريخ الاستحقاق',
+                      today,
+                    ),
+                    _infoRow(
+                      arabicFont,
+                      'Ref',
+                      receipt.invoiceNumber,
+                      'المرجع',
+                      receipt.invoiceNumber,
+                    ),
+                    _infoRow(
+                      arabicFont,
+                      'VAT No',
+                      CompanyFixedData.vatNumber,
+                      'الرقم الضريبي',
+                      CompanyFixedData.vatNumber,
+                    ),
+                  ],
+                ),
 
-    if (receipt.customerAddress != null && receipt.customerAddress!.isNotEmpty)
-      _infoRow(
-        arabicFont,
-        'Address',
-        receipt.customerAddress!,
-        'العنوان',
-        receipt.customerAddress!,
-      ),
+                pw.SizedBox(height: 16),
 
-    if (receipt.customerPhone != null && receipt.customerPhone!.isNotEmpty)
-      _infoRow(
-        arabicFont,
-        'Phone',
-        receipt.customerPhone!,
-        'الهاتف',
-        receipt.customerPhone!,
-      ),
+                pw.Table(
+                  border: pw.TableBorder.all(),
+                  children: [
+                    _infoRow(
+                      arabicFont,
+                      'Customer',
+                      receipt.customerName,
+                      'اسم العميل',
+                      receipt.customerName,
+                    ),
 
-    if (receipt.customerVat != null && receipt.customerVat!.isNotEmpty)
-      _infoRow(
-        arabicFont,
-        'VAT No',
-        receipt.customerVat!,
-        'الرقم الضريبي',
-        receipt.customerVat!,
-      ),
-  ],
-),
+                    if (receipt.customerAddress != null &&
+                        receipt.customerAddress!.isNotEmpty)
+                      _infoRow(
+                        arabicFont,
+                        'Address',
+                        receipt.customerAddress!,
+                        'العنوان',
+                        receipt.customerAddress!,
+                      ),
 
+                    if (receipt.customerPhone != null &&
+                        receipt.customerPhone!.isNotEmpty)
+                      _infoRow(
+                        arabicFont,
+                        'Phone',
+                        receipt.customerPhone!,
+                        'الهاتف',
+                        receipt.customerPhone!,
+                      ),
+
+                    if (receipt.customerVat != null &&
+                        receipt.customerVat!.isNotEmpty)
+                      _infoRow(
+                        arabicFont,
+                        'VAT No',
+                        receipt.customerVat!,
+                        'الرقم الضريبي',
+                        receipt.customerVat!,
+                      ),
+                  ],
+                ),
 
                 pw.SizedBox(height: 16),
 
@@ -208,8 +342,8 @@ class PdfReceiptService {
                     1: const pw.FlexColumnWidth(3), // Description
                     2: const pw.FixedColumnWidth(50), // Qty
                     3: const pw.FixedColumnWidth(60), // Price
-                    // 4: const pw.FixedColumnWidth(50), // VAT
-                    4: const pw.FixedColumnWidth(70), // Amount
+                    4: const pw.FixedColumnWidth(50), // VAT
+                    5: const pw.FixedColumnWidth(70), // Amount
                   },
                   children: [
                     // Header
@@ -222,7 +356,7 @@ class PdfReceiptService {
                         _cell(arabicFontBold, 'البيان\nDescription'),
                         _cell(arabicFontBold, 'العدد\nQty'),
                         _cell(arabicFontBold, 'السعر\nPrice'),
-                        // _cell(arabicFontBold, 'الضريبة\nVAT'),
+                        _cell(arabicFontBold, 'الضريبة\nVAT'),
                         _cell(arabicFontBold, 'الإجمالي\nAmount'),
                       ],
                     ),
@@ -233,14 +367,32 @@ class PdfReceiptService {
                       final total = item.unitPrice * item.quantity;
                       // final vat = total * receipt.vatPercentage / 100;
 
+                      // return pw.TableRow(
+                      //   children: [
+                      //     _cell(arabicFont, '${index + 1}'),
+                      //     _cell(arabicFont, item.nameEn),
+                      //     _cell(arabicFont, item.quantity.toString()),
+                      //     _cell(arabicFont, item.unitPrice.toStringAsFixed(2)),
+                      //     // _cell(arabicFont, '${vat.toStringAsFixed(2)} SR'),
+                      //     _cell(arabicFont, '${total.toStringAsFixed(2)} SR'),
+                      //   ],
+                      // );
+
+                      final vat = total * receipt.vatPercentage / 100;
+
                       return pw.TableRow(
                         children: [
                           _cell(arabicFont, '${index + 1}'),
-                          _cell(arabicFont, item.nameEn),
+                          _cell(
+                            arabicFont,
+                            item.nameAr != null && item.nameAr!.isNotEmpty
+                                ? '${item.nameEn}\n${item.nameAr}'
+                                : item.nameEn,
+                          ),
                           _cell(arabicFont, item.quantity.toString()),
                           _cell(arabicFont, item.unitPrice.toStringAsFixed(2)),
-                          // _cell(arabicFont, '${vat.toStringAsFixed(2)} SR'),
-                          _cell(arabicFont, '${total.toStringAsFixed(2)} SR'),
+                          _cell(arabicFont, vat.toStringAsFixed(2)),
+                          _cell(arabicFont, total.toStringAsFixed(2)),
                         ],
                       );
                     }),
@@ -270,23 +422,48 @@ class PdfReceiptService {
                       child: pw.Table(
                         border: pw.TableBorder.all(),
                         children: [
-                        _totalRow(
-  arabicFont,
-  'Taxable Amount\nالمبلغ الخاضع للضريبة',
-   receipt.subTotal,
-  // receipt.subTotal - (receipt.discount ?? 0.0),
-),
+                          //                         _totalRow(
+                          //   arabicFont,
+                          //   'Taxable Amount\nالمبلغ الخاضع للضريبة',
+                          //    receipt.subTotal,
+                          //   // receipt.subTotal - (receipt.discount ?? 0.0),
+                          // ),
 
+                          //                           _totalRow(
+                          //                             arabicFont,
+                          //                             'Discount\nالخصم',
+                          //                             receipt.discount ?? 0.0,
+                          //                           ),
+                          //                           // _totalRow(
+                          //                           //   arabicFont,
+                          //                           //   'Amount After Discount\nالمبلغ بعد الخصم',
+                          //                           //   receipt.subTotal - (receipt.discount ?? 0.0),
+                          //                           // ),
+                          //                           _totalRow(
+                          //                             arabicFont,
+                          //                             'VAT ${receipt.vatPercentage}%\nضريبة القيمة المضافة',
+                          //                             receipt.vatAmount,
+                          //                           ),
+                          //                           _totalRow(
+                          //                             arabicFontBold,
+                          //                             'Total Amount with VAT\nإجمالي المبلغ مع الضريبة',
+                          //                             receipt.netTotal,
+                          //                           ),
+                          _totalRow(
+                            arabicFont,
+                            'Taxable Amount\nالمبلغ الخاضع للضريبة',
+                            receipt.subTotal,
+                          ),
                           _totalRow(
                             arabicFont,
                             'Discount\nالخصم',
                             receipt.discount ?? 0.0,
                           ),
-                          // _totalRow(
-                          //   arabicFont,
-                          //   'Amount After Discount\nالمبلغ بعد الخصم',
-                          //   receipt.subTotal - (receipt.discount ?? 0.0),
-                          // ),
+                          _totalRow(
+                            arabicFont,
+                            'Amount After Discount\nالمبلغ بعد الخصم',
+                            receipt.subTotal - (receipt.discount ?? 0.0),
+                          ),
                           _totalRow(
                             arabicFont,
                             'VAT ${receipt.vatPercentage}%\nضريبة القيمة المضافة',
