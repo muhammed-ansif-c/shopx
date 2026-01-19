@@ -1,3 +1,4 @@
+/*
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/services.dart';
@@ -670,3 +671,328 @@ class PdfReceiptService {
     return base64Encode(bytes);
   }
 }
+
+*/
+
+
+
+import 'dart:convert';
+import 'dart:io';
+import 'package:flutter/services.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:shopx/domain/reciept/receipt_data.dart';
+
+class CompanyFixedData {
+  static const companyNameEn = 'HOFAN AHMED AL AL GARNI TRADING EST.';
+  static const companyNameAr = 'مؤسسة حوفان أحمد علي القرني للتجارة';
+
+  static const businessEn =
+      'JOYBREWS COFFEE MACHINES\nCoffee Machines Rental & Coffee Service Provider';
+  static const businessAr =
+      'جوي برووس ماكينات القهوة\nلتأجير مكائن القهوة وتقديم خدمات القهوة';
+
+  static const vatNumber = '310161813800003';
+  static const crNumber = '1010826267';
+}
+
+class PdfReceiptService {
+  static Future<File> generateReceiptPdf(ReceiptData receipt) async {
+    final pdf = pw.Document();
+
+    final regularFont =
+        pw.Font.ttf(await rootBundle.load('assets/fonts/Cairo-Regular.ttf'));
+    final boldFont =
+        pw.Font.ttf(await rootBundle.load('assets/fonts/Cairo-Bold.ttf'));
+
+    final logo = pw.MemoryImage(
+      (await rootBundle.load('assets/images/pdf_logo.png'))
+          .buffer
+          .asUint8List(),
+    );
+
+    final date = receipt.invoiceDate.toString().split(' ').first;
+
+    final qrData = _generateZatcaQr(
+      sellerName: CompanyFixedData.companyNameEn,
+      vatNumber: CompanyFixedData.vatNumber,
+      invoiceDate: receipt.invoiceDate,
+      totalWithVat: receipt.netTotal,
+      vatAmount: receipt.vatAmount,
+    );
+
+    pdf.addPage(
+      pw.Page(
+        pageFormat: PdfPageFormat.a4,
+        margin: const pw.EdgeInsets.all(20),
+        build: (_) {
+          return pw.Directionality(
+            textDirection: pw.TextDirection.rtl,
+            child: pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+              children: [
+                pw.Center(
+                  child: pw.Text(
+                    'Tax Invoice\nفاتورة ضريبية',
+                    textAlign: pw.TextAlign.center,
+                    style: pw.TextStyle(font: boldFont, fontSize: 15),
+                  ),
+                ),
+                pw.SizedBox(height: 10),
+
+                // ================= HEADER =================
+                pw.Table(
+                  border: pw.TableBorder.all(),
+                  columnWidths: {
+                    0: const pw.FlexColumnWidth(3),
+                    1: const pw.FixedColumnWidth(90),
+                    2: const pw.FlexColumnWidth(3),
+                  },
+                  children: [
+                    pw.TableRow(
+                      children: [
+                        _headerCell(
+                          boldFont,
+                          CompanyFixedData.companyNameEn,
+                          CompanyFixedData.businessEn,
+                          'VAT No: ${CompanyFixedData.vatNumber}\nCR No: ${CompanyFixedData.crNumber}',
+                        ),
+                        pw.Center(
+                          child: pw.Image(logo, width: 70, height: 70),
+                        ),
+                        _headerCell(
+                          boldFont,
+                          CompanyFixedData.companyNameAr,
+                          CompanyFixedData.businessAr,
+                          'الرقم الضريبي: ${CompanyFixedData.vatNumber}\nالسجل التجاري: ${CompanyFixedData.crNumber}',
+                          alignEnd: true,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+
+                pw.SizedBox(height: 10),
+
+                // ================= INFO TABLE =================
+                pw.Table(
+                  border: pw.TableBorder.all(),
+                  columnWidths: {
+                    0: const pw.FixedColumnWidth(90),
+                    1: const pw.FlexColumnWidth(),
+                    2: const pw.FixedColumnWidth(90),
+                    3: const pw.FlexColumnWidth(),
+                  },
+                  children: [
+                    _infoRow(regularFont, 'Vendor', CompanyFixedData.companyNameEn,
+                        'اسم المورد', CompanyFixedData.companyNameAr),
+                    _infoRow(regularFont, 'Inv No', receipt.invoiceNumber,
+                        'رقم الفاتورة', receipt.invoiceNumber),
+                    _infoRow(
+                        regularFont, 'Inv Date', date, 'تاريخ الإصدار', date),
+                    _infoRow(regularFont, 'Delivery Date', date,
+                        'تاريخ التوريد', date),
+                    _infoRow(regularFont, 'Due Date', date,
+                        'تاريخ الاستحقاق', date),
+                    _infoRow(regularFont, 'VAT No',
+                        CompanyFixedData.vatNumber, 'الرقم الضريبي',
+                        CompanyFixedData.vatNumber),
+                    _infoRow(regularFont, 'Customer', receipt.customerName,
+                        'اسم العميل', receipt.customerName),
+                    if (receipt.customerAddress?.isNotEmpty == true)
+                      _infoRow(regularFont, 'Address',
+                          receipt.customerAddress!, 'العنوان',
+                          receipt.customerAddress!),
+                    if (receipt.customerPhone?.isNotEmpty == true)
+                      _infoRow(regularFont, 'Phone', receipt.customerPhone!,
+                          'الهاتف', receipt.customerPhone!),
+                  ],
+                ),
+
+                pw.SizedBox(height: 10),
+
+                // ================= ITEMS =================
+                pw.Table(
+                  border: pw.TableBorder.all(),
+                  columnWidths: {
+                    0: const pw.FixedColumnWidth(30),
+                    1: const pw.FlexColumnWidth(4),
+                    2: const pw.FixedColumnWidth(45),
+                    3: const pw.FixedColumnWidth(60),
+                    4: const pw.FixedColumnWidth(45),
+                    5: const pw.FixedColumnWidth(70),
+                  },
+                  children: [
+                    pw.TableRow(
+                      decoration:
+                          const pw.BoxDecoration(color: PdfColors.grey300),
+                      children: [
+                        _cell(boldFont, 'S'),
+                        _cell(boldFont, 'Description\nالبيان'),
+                        _cell(boldFont, 'Qty\nالعدد'),
+                        _cell(boldFont, 'Price'),
+                        _cell(boldFont, 'VAT'),
+                        _cell(boldFont, 'Amount'),
+                      ],
+                    ),
+                    ...receipt.items.asMap().entries.map((e) {
+                      final i = e.key + 1;
+                      final item = e.value;
+                      final total = item.unitPrice * item.quantity;
+                      final vat = total * receipt.vatPercentage / 100;
+
+                      return pw.TableRow(children: [
+                        _cell(regularFont, '$i'),
+                        _cell(
+                          regularFont,
+                          item.nameAr?.isNotEmpty == true
+                              ? '${item.nameEn}\n${item.nameAr}'
+                              : item.nameEn,
+                        ),
+                        _cell(regularFont, '${item.quantity}'),
+                        _cell(regularFont,
+                            item.unitPrice.toStringAsFixed(2)),
+                        _cell(regularFont, vat.toStringAsFixed(2)),
+                        _cell(regularFont, total.toStringAsFixed(2)),
+                      ]);
+                    }),
+                  ],
+                ),
+
+                pw.SizedBox(height: 10),
+
+                // ================= TOTAL + QR =================
+                pw.Table(
+                  border: pw.TableBorder.all(),
+                  columnWidths: {
+                    0: const pw.FixedColumnWidth(140),
+                    1: const pw.FlexColumnWidth(),
+                  },
+                  children: [
+                    pw.TableRow(
+                      children: [
+                        pw.Padding(
+                          padding: const pw.EdgeInsets.all(8),
+                          child: pw.BarcodeWidget(
+                            barcode: pw.Barcode.qrCode(),
+                            data: qrData,
+                            width: 120,
+                            height: 120,
+                          ),
+                        ),
+                        pw.Table(
+                          border: pw.TableBorder.all(),
+                          children: [
+                            _totalRow(regularFont,
+                                'Taxable Amount\nالمبلغ الخاضع للضريبة',
+                                receipt.subTotal),
+                            _totalRow(regularFont, 'Discount\nالخصم',
+                                receipt.discount ?? 0),
+                            _totalRow(regularFont,
+                                'Amount After Discount\nالمبلغ بعد الخصم',
+                                receipt.subTotal -
+                                    (receipt.discount ?? 0)),
+                            _totalRow(regularFont,
+                                'VAT ${receipt.vatPercentage}%',
+                                receipt.vatAmount),
+                            _totalRow(boldFont,
+                                'Total Amount with VAT\nإجمالي المبلغ مع الضريبة',
+                                receipt.netTotal),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+
+    final dir = await getTemporaryDirectory();
+    final file = File('${dir.path}/invoice_${receipt.invoiceNumber}.pdf');
+    await file.writeAsBytes(await pdf.save());
+    return file;
+  }
+
+  // ================= HELPERS =================
+
+  static pw.Widget _headerCell(
+    pw.Font font,
+    String title,
+    String subtitle,
+    String footer, {
+    bool alignEnd = false,
+  }) {
+    return pw.Padding(
+      padding: const pw.EdgeInsets.all(6),
+      child: pw.Column(
+        crossAxisAlignment:
+            alignEnd ? pw.CrossAxisAlignment.end : pw.CrossAxisAlignment.start,
+        children: [
+          pw.Text(title, style: pw.TextStyle(font: font, fontSize: 10)),
+          pw.SizedBox(height: 2),
+          pw.Text(subtitle,
+              style: pw.TextStyle(font: font, fontSize: 8)),
+          pw.SizedBox(height: 4),
+          pw.Text(footer,
+              style: pw.TextStyle(font: font, fontSize: 8)),
+        ],
+      ),
+    );
+  }
+
+  static pw.TableRow _infoRow(pw.Font font, String enLabel, String enValue,
+      String arLabel, String arValue) {
+    return pw.TableRow(children: [
+      _cell(font, enLabel),
+      _cell(font, enValue),
+      _cell(font, arLabel),
+      _cell(font, arValue),
+    ]);
+  }
+
+  static pw.Widget _cell(pw.Font font, String text) {
+    return pw.Padding(
+      padding: const pw.EdgeInsets.all(5),
+      child: pw.Text(text, style: pw.TextStyle(font: font, fontSize: 9)),
+    );
+  }
+
+  static pw.TableRow _totalRow(
+      pw.Font font, String label, double value) {
+    return pw.TableRow(children: [
+      _cell(font, label),
+      _cell(font, value.toStringAsFixed(2)),
+    ]);
+  }
+
+  static String _generateZatcaQr({
+    required String sellerName,
+    required String vatNumber,
+    required DateTime invoiceDate,
+    required double totalWithVat,
+    required double vatAmount,
+  }) {
+    final bytes = <int>[];
+
+    void add(int tag, String value) {
+      final v = value.codeUnits;
+      bytes.add(tag);
+      bytes.add(v.length);
+      bytes.addAll(v);
+    }
+
+    add(1, sellerName);
+    add(2, vatNumber);
+    add(3, invoiceDate.toIso8601String());
+    add(4, totalWithVat.toStringAsFixed(2));
+    add(5, vatAmount.toStringAsFixed(2));
+
+    return base64Encode(bytes);
+  }
+}
+
