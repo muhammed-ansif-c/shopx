@@ -734,6 +734,8 @@ class PdfReceiptService {
       vatAmount: receipt.vatAmount,
     );
 
+    // const int minItemRows = 10;
+    const double itemRowHeight = 18;
     const int minItemRows = 10;
 
     // ================= ITEMS LOGIC =================
@@ -760,14 +762,21 @@ class PdfReceiptService {
       );
     }).toList();
 
-    final int emptyRowCount = receipt.items.length < minItemRows
-        ? minItemRows - receipt.items.length
+    // final int emptyRowCount = receipt.items.length < minItemRows
+    //     ? minItemRows - receipt.items.length
+    //     : 0;
+
+    // final emptyRows = List.generate(
+    //   emptyRowCount,
+    //   (_) => pw.TableRow(children: List.generate(6, (_) => _cell(regular, ''))),
+    // );
+
+    final int visibleItemCount = receipt.items.length;
+    final int remainingRows = visibleItemCount < minItemRows
+        ? minItemRows - visibleItemCount
         : 0;
 
-    final emptyRows = List.generate(
-      emptyRowCount,
-      (_) => pw.TableRow(children: List.generate(6, (_) => _cell(regular, ''))),
-    );
+    final double blankHeight = remainingRows * itemRowHeight;
 
     pdf.addPage(
       pw.Page(
@@ -1000,35 +1009,85 @@ class PdfReceiptService {
               ),
 
               // ================= BOX 4 : ITEMS =================
-              pw.Table(
-                border: pw.TableBorder.all(),
-                columnWidths: {
-                  0: const pw.FixedColumnWidth(30),
-                  1: const pw.FlexColumnWidth(4),
-                  2: const pw.FixedColumnWidth(45),
-                  3: const pw.FixedColumnWidth(70),
-                  4: const pw.FixedColumnWidth(45),
-                  5: const pw.FixedColumnWidth(70),
-                },
+              // pw.Table(
+              //   border: pw.TableBorder.all(),
+              //   columnWidths: {
+              //     0: const pw.FixedColumnWidth(30),
+              //     1: const pw.FlexColumnWidth(4),
+              //     2: const pw.FixedColumnWidth(45),
+              //     3: const pw.FixedColumnWidth(70),
+              //     4: const pw.FixedColumnWidth(45),
+              //     5: const pw.FixedColumnWidth(70),
+              //   },
+              //   children: [
+              //     pw.TableRow(
+              //       decoration: const pw.BoxDecoration(
+              //         color: PdfColors.grey300,
+              //       ),
+              //       children: [
+              //         _cell(bold, 'م\nS'),
+              //         _cell(bold, 'البيان\nDescription'),
+              //         _cell(bold, 'العدد\nQty'),
+              //         _cell(
+              //           bold,
+              //           'سعر الإيجار والخدمة\nPrice (Rent & Service)',
+              //         ),
+              //         _cell(bold, 'الضريبة\nVAT'),
+              //         _cell(bold, 'الإجمالي\nAmount'),
+              //       ],
+              //     ),
+              //     ...itemRows,
+              //     // ...emptyRows,
+              //   ],
+              // ),
+
+              // ================= BOX 4 : ITEMS =================
+              pw.Column(
                 children: [
-                  pw.TableRow(
-                    decoration: const pw.BoxDecoration(
-                      color: PdfColors.grey300,
-                    ),
+                  // ===== ACTUAL ITEMS TABLE =====
+                  pw.Table(
+                    border: pw.TableBorder.all(),
+                    columnWidths: {
+                      0: const pw.FixedColumnWidth(30),
+                      1: const pw.FlexColumnWidth(4),
+                      2: const pw.FixedColumnWidth(45),
+                      3: const pw.FixedColumnWidth(70),
+                      4: const pw.FixedColumnWidth(45),
+                      5: const pw.FixedColumnWidth(70),
+                    },
                     children: [
-                      _cell(bold, 'م\nS'),
-                      _cell(bold, 'البيان\nDescription'),
-                      _cell(bold, 'العدد\nQty'),
-                      _cell(
-                        bold,
-                        'سعر الإيجار والخدمة\nPrice (Rent & Service)',
+                      pw.TableRow(
+                        decoration: const pw.BoxDecoration(
+                          color: PdfColors.grey300,
+                        ),
+                        children: [
+                          _cell(bold, 'م\nS'),
+                          _cell(bold, 'البيان\nDescription'),
+                          _cell(bold, 'العدد\nQty'),
+                          _cell(
+                            bold,
+                            'سعر الإيجار والخدمة\nPrice (Rent & Service)',
+                          ),
+                          _cell(bold, 'الضريبة\nVAT'),
+                          _cell(bold, 'الإجمالي\nAmount'),
+                        ],
                       ),
-                      _cell(bold, 'الضريبة\nVAT'),
-                      _cell(bold, 'الإجمالي\nAmount'),
+                      ...itemRows,
                     ],
                   ),
-                  ...itemRows,
-                  ...emptyRows,
+
+                  // ===== BLANK SPACE (NO BORDERS) =====
+                  if (blankHeight > 0)
+                    pw.Container(
+                      height: blankHeight,
+                      decoration: pw.BoxDecoration(
+                        border: pw.Border(
+                          left: pw.BorderSide(),
+                          right: pw.BorderSide(),
+                          bottom: pw.BorderSide(),
+                        ),
+                      ),
+                    ),
                 ],
               ),
 
