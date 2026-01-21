@@ -2,8 +2,12 @@
 import 'package:shopx/domain/config/company_config.dart';
 import 'package:shopx/domain/reciept/receipt_data.dart';
 import 'package:shopx/domain/sales/sale.dart';
+import 'package:shopx/domain/settings/company_settings.dart';
 
-ReceiptData receiptFromSale(Sale sale) {
+ReceiptData receiptFromSale(
+  Sale sale,
+  CompanySettings company,
+  ) {
   final receiptItems = sale.items.map((item) {
     return ReceiptItem(
       nameEn: item.productName,
@@ -14,13 +18,13 @@ ReceiptData receiptFromSale(Sale sale) {
   }).toList();
 
   return ReceiptData(
-    companyNameEn: CompanyConfig.companyNameEn,
-    companyNameAr: CompanyConfig.companyNameAr,
-    city: CompanyConfig.city,
-    country: CompanyConfig.country,
-    crNumber: CompanyConfig.crNumber,
-    vatNumber: CompanyConfig.vatNumber,
-    mobile: CompanyConfig.mobile,
+    companyNameEn: company.companyNameEn,
+    companyNameAr: company.companyNameAr,
+    // city: CompanyConfig.city,
+    // country: CompanyConfig.country,
+    crNumber: company.crNumber,
+    vatNumber: company.vatNumber,
+    mobile: company.phone,
 
     invoiceNumber: sale.id.toString(),
     invoiceDate: sale.saleDate,

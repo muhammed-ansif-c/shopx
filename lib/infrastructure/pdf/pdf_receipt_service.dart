@@ -689,18 +689,24 @@ import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:shopx/domain/reciept/receipt_data.dart';
+import 'package:shopx/domain/settings/company_settings.dart';
 
-class CompanyFixedData {
-  static const companyNameEn = 'SAQAF NAQAL TRADING Est.';
-  static const companyNameAr = 'مؤسسة سقاف النقل التجارية';
-  static const businessEn = 'MAKKAH - KSA';
-  static const businessAr = 'مكة المكرمة - المملكة العربية السعودية';
-  static const vatNumber = '310185723200003';
-  static const crNumber = '4031213057';
-}
+// class CompanyFixedData {
+//   static const companyNameEn = 'SAQAF NAQAL TRADING Est.';
+//   static const companyNameAr = 'مؤسسة سقاف النقل التجارية';
+//   static const businessEn = 'MAKKAH - KSA';
+//   static const businessAr = 'مكة المكرمة - المملكة العربية السعودية';
+//   static const vatNumber = '310185723200003';
+//   static const crNumber = '4031213057';
+// }
 
 class PdfReceiptService {
-  static Future<File> generateReceiptPdf(ReceiptData receipt) async {
+  // static Future<File> generateReceiptPdf(ReceiptData receipt) async {
+  static Future<File> generateReceiptPdf({
+  required ReceiptData receipt,
+  required CompanySettings settings,
+}) async {
+
     final pdf = pw.Document();
 
     final regular = pw.Font.ttf(
@@ -721,8 +727,8 @@ class PdfReceiptService {
         '${saleDate.year}-${saleDate.month.toString().padLeft(2, '0')}-${saleDate.day.toString().padLeft(2, '0')}';
 
     final qrData = _zatcaQr(
-      sellerName: CompanyFixedData.companyNameEn,
-      vatNumber: CompanyFixedData.vatNumber,
+      sellerName: settings.companyNameEn,
+      vatNumber: settings.vatNumber,
       invoiceDate: receipt.invoiceDate,
       totalWithVat: receipt.netTotal,
       vatAmount: receipt.vatAmount,
@@ -772,16 +778,20 @@ class PdfReceiptService {
                 child: pw.Row(
                   children: [
                     pw.Expanded(
-                      child: _headerBlock(bold, CompanyFixedData.companyNameEn, CompanyFixedData.businessEn, 
-                      'VAT No.: ${CompanyFixedData.vatNumber}\nCR No.: ${CompanyFixedData.crNumber}', pw.TextAlign.left),
+                      child: 
+                      _headerBlock(
+                        bold,
+                         settings.companyNameEn,
+                          settings.companyAddressEn, 
+                      'VAT No.: ${settings.vatNumber}\nCR No.: ${settings.crNumber}', pw.TextAlign.left),
                     ),
                     pw.Padding(
                       padding: const pw.EdgeInsets.symmetric(horizontal: 10),
                       child: pw.Image(logo, width: 65),
                     ),
                     pw.Expanded(
-                      child: _headerBlock(bold, CompanyFixedData.companyNameAr, CompanyFixedData.businessAr, 
-                      'رقم الضريبية : ${CompanyFixedData.vatNumber}\nرقم السجل التجاري : ${CompanyFixedData.crNumber}', pw.TextAlign.right),
+                      child: _headerBlock(bold, settings.companyNameAr, settings.companyAddressAr, 
+                      'رقم الضريبية : ${settings.vatNumber}\nرقم السجل التجاري : ${settings.crNumber}', pw.TextAlign.right),
                     ),
                   ],
                 ),
@@ -801,7 +811,7 @@ class PdfReceiptService {
                 children: [
                   pw.TableRow(children: [
                     _cell(bold, 'Vendor'),
-                    _cell(bold, CompanyFixedData.companyNameEn, align: pw.TextAlign.center),
+                    _cell(bold, settings.companyNameEn, align: pw.TextAlign.center),
                     _cell(bold, 'اسم المورد', align: pw.TextAlign.right),
                   ]),
                 ],
@@ -818,7 +828,7 @@ class PdfReceiptService {
                 },
                 children: [
                   _infoRow(regular, 'Inv No.', 'INV/${receipt.invoiceDate.year}/${receipt.invoiceNumber}', 'رقم الفاتورة', 'Address', receipt.customerAddress ?? '', 'عنوان المورد'),
-                  _infoRow(regular, 'Inv. Date', invoiceDateFormatted, 'تاريخ الإصدار', 'VAT. No', CompanyFixedData.vatNumber, 'الرقم الضريبي'),
+                  _infoRow(regular, 'Inv. Date', invoiceDateFormatted, 'تاريخ الإصدار', 'VAT. No', settings.vatNumber, 'الرقم الضريبي'),
                   _infoRow(regular, 'Delivery', deliveryDateFormatted, 'تاريخ التوريد', 'Due Date', deliveryDateFormatted, 'تاريخ الاستحقاق'),
                   _infoRow(regular, 'Inv. Type', 'Tax Invoice', 'نوع الفاتورة', 'Ref', 'Office Jed1/0238', 'المرجع'),
                 ],
@@ -840,8 +850,8 @@ class PdfReceiptService {
                 children: [
                   _infoRow(regular, 'Customer', receipt.customerName, 'اسم العميل', 'Customer', receipt.customerName, 'اسم العميل'),
                   _infoRow(regular, 'Address', receipt.customerAddress ?? '', 'عنوان العميل', 'Address', receipt.customerAddress ?? '', 'عنوان العميل'),
-                  _infoRow(regular, 'PhoneNo.', receipt.customerPhone ?? '', 'الهاتف', 'CR', CompanyFixedData.crNumber, 'السجل التجاري'),
-                  _infoRow(regular, 'Code', 'Sameer', 'رقم العميل', 'VAT. No', CompanyFixedData.vatNumber, 'الرقم الضريبي'),
+                  _infoRow(regular, 'PhoneNo.', receipt.customerPhone ?? '', 'الهاتف', 'CR', settings.crNumber, 'السجل التجاري'),
+                  _infoRow(regular, 'Code', 'Sameer', 'رقم العميل', 'VAT. No', settings.vatNumber, 'الرقم الضريبي'),
                 ],
               ),
 

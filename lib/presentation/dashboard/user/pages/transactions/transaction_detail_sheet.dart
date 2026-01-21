@@ -4,6 +4,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:shopx/application/payments/payments_notifier.dart';
 import 'package:shopx/application/sales/sales_notifier.dart';
+import 'package:shopx/application/settings/settings_notifier.dart';
 import 'package:shopx/core/constants.dart';
 import 'package:shopx/domain/reciept/reciept_from_sale.dart';
 import 'package:shopx/domain/sales/sale.dart';
@@ -21,6 +22,10 @@ class TransactionDetailSheet extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final settingsState = ref.watch(settingsNotifierProvider);
+final companySettings = settingsState.settings!;
+
+    
     // ✅ FETCH FULL INVOICE WHEN SHEET OPENS
     useEffect(() {
       Future.microtask(() {
@@ -142,7 +147,7 @@ class TransactionDetailSheet extends HookConsumerWidget {
               onPressed: invoice == null
                   ? null
                   : () {
-                      final receipt = receiptFromSale(invoice);
+                      final receipt = receiptFromSale(invoice,companySettings);
 
                       Navigator.push(
                         context,

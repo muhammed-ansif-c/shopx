@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:shopx/application/settings/settings_notifier.dart';
 import 'package:shopx/core/constants.dart';
 import 'package:shopx/domain/reciept/reciept_from_sale.dart';
 import 'package:shopx/domain/sales/sale.dart';
@@ -30,6 +31,9 @@ class TransactionDetailsDialog extends HookConsumerWidget {
   bool get _isVoided => sale.saleStatus == 'voided';
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final settingsState = ref.watch(settingsNotifierProvider);
+final companySettings = settingsState.settings!;
+
     final isSubmitting = useState(false);
 
     return Dialog(
@@ -135,7 +139,7 @@ class TransactionDetailsDialog extends HookConsumerWidget {
                     icon: const Icon(Icons.receipt_long),
                     label: const Text("Preview Receipt"),
                     onPressed: () {
-                      final receipt = receiptFromSale(sale);
+                      final receipt = receiptFromSale(sale,companySettings);
 
                       Navigator.push(
                         context,
