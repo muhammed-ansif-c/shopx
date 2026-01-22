@@ -455,6 +455,7 @@ class SuccessScreen extends HookConsumerWidget {
   }
 }
 */
+
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
@@ -474,6 +475,7 @@ import 'package:shopx/domain/config/company_config.dart';
 import 'package:shopx/domain/reciept/receipt_data.dart';
 import 'package:shopx/domain/reciept/reciept_from_sale.dart';
 import 'package:shopx/domain/sales/sale.dart';
+import 'package:shopx/domain/settings/company_settings.dart';
 import 'package:shopx/infrastructure/pdf/pdf_receipt_service.dart';
 import 'package:shopx/infrastructure/printer/thermal_printer_service.dart';
 import 'package:shopx/presentation/dashboard/user/user_dashboard.dart';
@@ -486,7 +488,9 @@ class SuccessScreen extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final settingsState = ref.watch(settingsNotifierProvider);
-    final companySettings = settingsState.settings!;
+    final companySettings = settingsState.settings;
+
+   
 
     print("🔥 SUCCESS SCREEN SALE ID = $saleId");
 
@@ -539,49 +543,53 @@ class SuccessScreen extends HookConsumerWidget {
     final emailController = useTextEditingController();
 
     // //SHARE PDF
-    // Future<void> onSendPdfReceipt() async {
-    //   final receiptItems = sale.items.map((item) {
-    //     return ReceiptItem(
-    //       nameEn: item.productName,
-    //       nameAr: item.productNameAr,
-    //       unitPrice: item.unitPrice,
-    //       quantity: item.quantity,
-    //     );
-    //   }).toList();
-
-    //   final double subTotal = sale.subtotalAmount;
-    //   final double vatAmount = sale.vatAmount;
-    //   const double vatPercentage = 15.0;
-
-    //   final receipt = ReceiptData(
-    //     companyNameEn: CompanyConfig.companyNameEn,
-    //     companyNameAr: CompanyConfig.companyNameAr,
-    //     city: CompanyConfig.city,
-    //     country: CompanyConfig.country,
-    //     crNumber: CompanyConfig.crNumber,
-    //     vatNumber: CompanyConfig.vatNumber,
-    //     mobile: CompanyConfig.mobile,
-    //     customerAddress: customer.address,
-    //     customerPhone: customer.phone,
-    //     discount: sale.discountAmount,
-    //     invoiceNumber: sale.id.toString(),
-    //     invoiceDate: sale.saleDate,
-    //     customerName: sale.customerName,
-    //     items: receiptItems,
-    //     subTotal: subTotal,
-    //     vatPercentage: vatPercentage,
-    //     vatAmount: vatAmount,
-    //     netTotal: sale.totalAmount,
-    //     qrPayload: 'Invoice:${sale.id}',
-    //   );
-
-    //   final file = await PdfReceiptService.generateReceiptPdf(receipt);
-
-    //   await Share.shareXFiles([XFile(file.path)], text: 'Invoice ${sale.id}');
-    // }
-
     Future<void> onSendPdfReceipt() async {
-      final receipt = receiptFromSale(sale, companySettings);
+       // 🔴 LEGAL GUARD — FAIL FAST
+  if (companySettings == null ||
+      companySettings.companyNameEn.isEmpty ||
+      companySettings.vatNumber.isEmpty ||
+      companySettings.crNumber.isEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          "Company settings are not configured. PDF receipt cannot be issued.",
+        ),
+      ),
+    );
+    return; // ⛔ STOP EXECUTION HERE
+  }
+      final receiptItems = sale.items.map((item) {
+        return ReceiptItem(
+          nameEn: item.productName,
+          nameAr: item.productNameAr,
+          unitPrice: item.unitPrice,
+          quantity: item.quantity,
+        );
+      }).toList();
+
+      final double subTotal = sale.subtotalAmount;
+      final double vatAmount = sale.vatAmount;
+      const double vatPercentage = 15.0;
+
+      final receipt = ReceiptData(
+        companyNameEn: companySettings.companyNameEn,
+        companyNameAr: companySettings.companyNameAr,
+        crNumber: companySettings.crNumber,
+        vatNumber: companySettings.vatNumber,
+        mobile: companySettings.phone,
+        customerAddress: customer.address,
+        customerPhone: customer.phone,
+        discount: sale.discountAmount,
+        invoiceNumber: sale.id.toString(),
+        invoiceDate: sale.saleDate,
+        customerName: sale.customerName,
+        items: receiptItems,
+        subTotal: subTotal,
+        vatPercentage: vatPercentage,
+        vatAmount: vatAmount,
+        netTotal: sale.totalAmount,
+        qrPayload: 'Invoice:${sale.id}',
+      );
 
       final file = await PdfReceiptService.generateReceiptPdf(
         receipt: receipt,
@@ -595,59 +603,60 @@ class SuccessScreen extends HookConsumerWidget {
     // 5. Thermal Printer ESC/POS
     // ---------------------------
 
-    // void onOpenReceiptPreview() {
-    //   final receiptItems = sale.items.map((item) {
-    //     return ReceiptItem(
-    //       nameEn: item.productName,
-    //       nameAr: item.productNameAr,
-    //       unitPrice: item.unitPrice,
-    //       quantity: item.quantity,
-    //     );
-    //   }).toList();
-
-    //   final double subTotal = sale.subtotalAmount;
-    //   final double vatAmount = sale.vatAmount;
-    //   const double vatPercentage = 15.0;
-    //   final double netTotal = sale.totalAmount;
-
-    //   final receiptData = ReceiptData(
-    //     companyNameEn: CompanyConfig.companyNameEn,
-    //     companyNameAr: CompanyConfig.companyNameAr,
-    //     city: CompanyConfig.city,
-    //     country: CompanyConfig.country,
-    //     crNumber: CompanyConfig.crNumber,
-    //     vatNumber: CompanyConfig.vatNumber,
-    //     mobile: CompanyConfig.mobile,
-
-    //     invoiceNumber: sale.id.toString(),
-    //     invoiceDate: sale.saleDate,
-    //     customerName: sale.customerName,
-
-    //     items: receiptItems,
-    //     subTotal: subTotal,
-    //     discount: sale.discountAmount,
-    //     vatPercentage: vatPercentage,
-    //     vatAmount: vatAmount,
-    //     netTotal: netTotal,
-
-    //     qrPayload: 'Invoice:${sale.id}',
-    //   );
-
-    //   Navigator.push(
-    //     context,
-    //     MaterialPageRoute(
-    //       builder: (_) => RecieptPreviewScreen(receipt: receiptData),
-    //     ),
-    //   );
-    // }
-
     void onOpenReceiptPreview() {
-      final receipt = receiptFromSale(sale, companySettings);
+    // 🔴 LEGAL GUARD — FAIL FAST
+  if (companySettings == null ||
+      companySettings.companyNameEn.isEmpty ||
+      companySettings.vatNumber.isEmpty ||
+      companySettings.crNumber.isEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          "Company settings are not configured. Receipt preview is not available.",
+        ),
+      ),
+    );
+    return; // ⛔ STOP EXECUTION HERE
+  }
+      
+      final receiptItems = sale.items.map((item) {
+        return ReceiptItem(
+          nameEn: item.productName,
+          nameAr: item.productNameAr,
+          unitPrice: item.unitPrice,
+          quantity: item.quantity,
+        );
+      }).toList();
+
+      final double subTotal = sale.subtotalAmount;
+      final double vatAmount = sale.vatAmount;
+      const double vatPercentage = 15.0;
+      final double netTotal = sale.totalAmount;
+
+      final receiptData = ReceiptData(
+        companyNameEn: companySettings.companyNameEn,
+        companyNameAr: companySettings.companyNameAr,
+        crNumber: companySettings.crNumber,
+        vatNumber: companySettings.vatNumber,
+        mobile: companySettings.phone,
+        invoiceNumber: sale.id.toString(),
+        invoiceDate: sale.saleDate,
+        customerName: sale.customerName,
+
+        items: receiptItems,
+        subTotal: subTotal,
+        discount: sale.discountAmount,
+        vatPercentage: vatPercentage,
+        vatAmount: vatAmount,
+        netTotal: netTotal,
+
+        qrPayload: 'Invoice:${sale.id}',
+      );
 
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (_) => RecieptPreviewScreen(receipt: receipt),
+          builder: (_) => RecieptPreviewScreen(receipt: receiptData),
         ),
       );
     }
@@ -937,4 +946,3 @@ class SuccessScreen extends HookConsumerWidget {
     );
   }
 }
-
