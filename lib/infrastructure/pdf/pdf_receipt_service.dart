@@ -684,6 +684,7 @@ pw.Widget bilingualRow(
 
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
@@ -701,6 +702,34 @@ import 'package:shopx/domain/settings/company_settings.dart';
 // }
 
 class PdfReceiptService {
+  
+static Future<pw.ImageProvider> _loadCompanyLogo(
+  CompanySettings settings,
+) async {
+  // If logo URL exists → download it
+  if (settings.logoUrl != null && settings.logoUrl!.isNotEmpty) {
+    try {
+      final uri = Uri.parse(settings.logoUrl!);
+      final response = await HttpClient().getUrl(uri).then((r) => r.close());
+      final bytes = await consolidateHttpClientResponseBytes(response);
+      return pw.MemoryImage(bytes);
+    } catch (_) {
+      // If download fails → fallback to asset
+    }
+  }
+
+  // Fallback: bundled default logo
+  return pw.MemoryImage(
+    (await rootBundle.load(
+      'assets/images/pdf_logo.png',
+    ))
+        .buffer
+        .asUint8List(),
+  );
+}
+// this much is new 
+
+
   // static Future<File> generateReceiptPdf(ReceiptData receipt) async {
   static Future<File> generateReceiptPdf({
   required ReceiptData receipt,
@@ -727,9 +756,14 @@ class PdfReceiptService {
       await rootBundle.load('assets/fonts/Cairo-Bold.ttf'),
     );
 
-    final logo = pw.MemoryImage(
-      (await rootBundle.load('assets/images/pdf_logo.png')).buffer.asUint8List(),
-    );
+    // final logo = pw.MemoryImage(
+    //   (await rootBundle.load('assets/images/pdf_logo.png')).buffer.asUint8List(),
+    // );
+        
+    
+
+        final logo = await _loadCompanyLogo(settings);
+
 
     final saleDate = receipt.invoiceDate;
     final invoiceDateFormatted =
@@ -802,7 +836,11 @@ class PdfReceiptService {
                     ),
                     pw.Expanded(
                       child: _headerBlock(bold, settings.companyNameAr, settings.companyAddressAr, 
-                      'رقم الضريبية : ${settings.vatNumber}\nرقم السجل التجاري : ${settings.crNumber}', pw.TextAlign.right),
+                      // 'رقم الضريبية : ${settings.vatNumber}\nرقم السجل التجاري : ${settings.crNumber}'
+                      'رقم الضريبة : ${settings.vatNumber}\nرقم السجل التجاري : ${settings.crNumber}'
+
+                      , 
+                      pw.TextAlign.right),
                     ),
                   ],
                 ),
@@ -839,7 +877,7 @@ class PdfReceiptService {
                 },
                 children: [
                   _infoRow(regular, 'Inv No.', 'INV/${receipt.invoiceDate.year}/${receipt.invoiceNumber}', 'رقم الفاتورة', 'Address', receipt.customerAddress ?? '', 'عنوان المورد'),
-                  _infoRow(regular, 'Inv. Date', invoiceDateFormatted, 'تاريخ الإصدار', 'VAT. No', settings.vatNumber, 'الرقم الضريبي'),
+                  _infoRow(regular, 'Inv. Date', invoiceDateFormatted, 'تاريخ الإصدار', 'VAT. No', settings.vatNumber, 'رقم الضريبة'),
                   _infoRow(regular, 'Delivery', deliveryDateFormatted, 'تاريخ التوريد', 'Due Date', deliveryDateFormatted, 'تاريخ الاستحقاق'),
                   _infoRow(regular, 'Inv. Type', 'Tax Invoice', 'نوع الفاتورة', 'Ref', 'Office Jed1/0238', 'المرجع'),
                 ],
@@ -861,8 +899,8 @@ class PdfReceiptService {
                 children: [
                   _infoRow(regular, 'Customer', receipt.customerName, 'اسم العميل', 'Customer', receipt.customerName, 'اسم العميل'),
                   _infoRow(regular, 'Address', receipt.customerAddress ?? '', 'عنوان العميل', 'Address', receipt.customerAddress ?? '', 'عنوان العميل'),
-                  _infoRow(regular, 'PhoneNo.', receipt.customerPhone ?? '', 'الهاتف', 'CR', settings.crNumber, 'السجل التجاري'),
-                  _infoRow(regular, 'Code', 'Sameer', 'رقم العميل', 'VAT. No', settings.vatNumber, 'الرقم الضريبي'),
+                  _infoRow(regular, 'PhoneNo.', receipt.customerPhone ?? '', 'الهاتف', 'CR', settings.crNumber, 'رقم السجل التجاري'),
+                  _infoRow(regular, 'Code', 'Sameer', 'رقم العميل', 'VAT. No', settings.vatNumber, 'رقم الضريبة'),
                 ],
               ),
 
@@ -1023,3 +1061,5 @@ class PdfReceiptService {
     return base64Encode(bytes);
   }
 }
+
+
