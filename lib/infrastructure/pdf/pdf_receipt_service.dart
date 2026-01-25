@@ -183,16 +183,20 @@ class PdfReceiptService {
                     ),
 
                     // ✅ ARABIC — RIGHT (FLUSHED)
-                    pw.Expanded(
-                      flex: 4,
-                      child: _headerBlockArabic(
-                        arabicRegular, // 🔥 Arabic font applied
-                        settings.companyNameAr,
-                        settings.companyAddressAr,
-                        'رقم الضريبة : ${_toArabicDigits(settings.vatNumber)}\n'
-                        'رقم السجل التجاري : ${_toArabicDigits(settings.crNumber)}',
-                      ),
-                    ),
+                   pw.Expanded(
+  flex: 4,
+  child: pw.Align(
+    alignment: pw.Alignment.topRight, // 🔥 THIS IS THE FIX
+    child: _headerBlockArabic(
+      arabicRegular,
+      settings.companyNameAr,
+      settings.companyAddressAr,
+      'رقم الضريبة : ${_toArabicDigits(settings.vatNumber)}\n'
+      'رقم السجل التجاري : ${_toArabicDigits(settings.crNumber)}',
+    ),
+  ),
+),
+
                   ],
                 ),
               ),
@@ -289,38 +293,48 @@ class PdfReceiptService {
 
               pw.SizedBox(height: 10),
 
-              // ================= CUSTOMER BOX =================
               // pw.Table(
               //   border: pw.TableBorder.all(width: 0.5),
               //   columnWidths: {
-              //     0: const pw.FixedColumnWidth(65),
-              //     1: const pw.FlexColumnWidth(),
-              //     2: const pw.FixedColumnWidth(85),
-              //     3: const pw.FixedColumnWidth(85),
-              //     4: const pw.FlexColumnWidth(),
-              //     5: const pw.FixedColumnWidth(85),
+              //     0: const pw.FixedColumnWidth(65), // English label
+              //     1: const pw.FlexColumnWidth(), // Combined value
+              //     2: const pw.FixedColumnWidth(85), // Arabic label
               //   },
               //   children: [
-              //     _infoRow(
-              //       regular,
-              //      arabicRegular,
-              //       'Customer',
-              //       receipt.customerName,
-              //       'اسم العميل',
-              //       'Customer',
-              //       receipt.customerName,
-              //       'اسم العميل',
+              //     // ---------- CUSTOMER ----------
+              //     pw.TableRow(
+              //       children: [
+              //         _cell(regular, 'Customer'),
+              //         _cell(
+              //           regular,
+              //           receipt.customerName,
+              //           align: pw.TextAlign.center,
+              //         ),
+              //         _cell(
+              //           arabicRegular,
+              //           'اسم العميل',
+              //           align: pw.TextAlign.right,
+              //         ),
+              //       ],
               //     ),
-              //     _infoRow(
-              //       regular,
-              //       arabicRegular,
-              //       'Address',
-              //       receipt.customerAddress ?? '',
-              //       'عنوان العميل',
-              //       'Address',
-              //       receipt.customerAddress ?? '',
-              //       'عنوان العميل',
+
+              //     // ---------- ADDRESS ----------
+              //     pw.TableRow(
+              //       children: [
+              //         _cell(regular, 'Address'),
+              //         _cell(
+              //           regular,
+              //           receipt.customerAddress ?? '',
+              //           align: pw.TextAlign.center,
+              //         ),
+              //         _cell(
+              //           arabicRegular,
+              //           'عنوان العميل',
+              //           align: pw.TextAlign.right,
+              //         ),
+              //       ],
               //     ),
+
               //     _infoRow(
               //       regular,
               //       arabicRegular,
@@ -344,71 +358,74 @@ class PdfReceiptService {
               //     ),
               //   ],
               // ),
+
               pw.Table(
-                border: pw.TableBorder.all(width: 0.5),
-                columnWidths: {
-                  0: const pw.FixedColumnWidth(65), // English label
-                  1: const pw.FlexColumnWidth(), // Combined value
-                  2: const pw.FixedColumnWidth(85), // Arabic label
-                },
-                children: [
-                  // ---------- CUSTOMER ----------
-                  pw.TableRow(
-                    children: [
-                      _cell(regular, 'Customer'),
-                      _cell(
-                        regular,
-                        '${receipt.customerName}, ${receipt.companyNameAr ?? ''}',
-                        align: pw.TextAlign.center,
-                      ),
-                      _cell(
-                        arabicRegular,
-                        'اسم العميل',
-                        align: pw.TextAlign.right,
-                      ),
-                    ],
-                  ),
+  border: pw.TableBorder.all(width: 0.5),
+  columnWidths: {
+    0: const pw.FixedColumnWidth(65), // Consistent width for English labels
+    1: const pw.FlexColumnWidth(),    // Dynamic middle area
+    2: const pw.FixedColumnWidth(85), // Consistent width for Arabic labels
+  },
+  children: [
+    // ---------- CUSTOMER ----------
+    pw.TableRow(
+      children: [
+        _cell(regular, 'Customer'),
+        _cell(
+          regular,
+          receipt.customerName,
+          align: pw.TextAlign.center,
+        ),
+        _cell(
+          arabicRegular,
+          'اسم العميل',
+          align: pw.TextAlign.right,
+        ),
+      ],
+    ),
 
-                  // ---------- ADDRESS ----------
-                  pw.TableRow(
-                    children: [
-                      _cell(regular, 'Address'),
-                      _cell(
-                        regular,
-                        receipt.customerAddress ?? '',
-                        align: pw.TextAlign.center,
-                      ),
-                      _cell(
-                        arabicRegular,
-                        'عنوان العميل',
-                        align: pw.TextAlign.right,
-                      ),
-                    ],
-                  ),
+    // ---------- ADDRESS ----------
+    pw.TableRow(
+      children: [
+        _cell(regular, 'Address'),
+        _cell(
+          regular,
+          receipt.customerAddress ?? '',
+          align: pw.TextAlign.center,
+        ),
+        _cell(
+          arabicRegular,
+          'عنوان العميل',
+          align: pw.TextAlign.right,
+        ),
+      ],
+    ),
 
-                  _infoRow(
-                    regular,
-                    arabicRegular,
-                    'PhoneNo.',
-                    receipt.customerPhone ?? '',
-                    'الهاتف',
-                    'CR',
-                    settings.crNumber,
-                    'رقم السجل التجاري',
-                  ),
-                  _infoRow(
-                    regular,
-                    arabicRegular,
-                    'Code',
-                    // 'Sameer',
-                    '',
-                    'رقم العميل',
-                    'VAT. No',
-                    settings.vatNumber,
-                    'رقم الضريبة',
-                  ),
-                ],
-              ),
+    // ---------- PHONE & CR ----------
+    _infoRow(
+      regular,
+      arabicRegular,
+      'PhoneNo.',
+      receipt.customerPhone ?? '',
+      'الهاتف',
+      'CR',
+      settings.crNumber,
+      'السجل التجاري', // Matches your image descriptor
+    ),
+
+    // ---------- CODE & VAT ----------
+    _infoRow(
+      regular,
+      arabicRegular,
+      'Code',
+     '', // 'Sameer (Makkah)', // You can pass your dynamic data here
+      'رقم العميل',
+      'VAT. No',
+      settings.vatNumber,
+      'الرقم الضريبي',
+    ),
+  ],
+),
 
               pw.SizedBox(height: 10),
 
@@ -601,8 +618,11 @@ class PdfReceiptService {
     return file;
   }
 
+
+
   // static pw.TableRow _infoRow(
-  //   pw.Font font,
+  //   pw.Font enFont,
+  //   pw.Font arFont,
   //   String enL,
   //   String val,
   //   String arL,
@@ -612,12 +632,12 @@ class PdfReceiptService {
   // ) {
   //   return pw.TableRow(
   //     children: [
-  //       _cell(font, enL, fontSize: 7),
-  //       _cell(font, val, fontSize: 7, align: pw.TextAlign.center),
-  //       _cell(font, arL, fontSize: 7, align: pw.TextAlign.right),
-  //       _cell(font, enL2, fontSize: 7),
-  //       _cell(font, val2, fontSize: 7, align: pw.TextAlign.center),
-  //       _cell(font, arL2, fontSize: 7, align: pw.TextAlign.right),
+  //       _cell(enFont, enL, fontSize: 7),
+  //       _cell(enFont, val, fontSize: 7, align: pw.TextAlign.center),
+  //       _cell(arFont, arL, fontSize: 7, align: pw.TextAlign.right),
+  //       _cell(enFont, enL2, fontSize: 7),
+  //       _cell(enFont, val2, fontSize: 7, align: pw.TextAlign.center),
+  //       _cell(arFont, arL2, fontSize: 7, align: pw.TextAlign.right),
   //     ],
   //   );
   // }
@@ -634,15 +654,40 @@ class PdfReceiptService {
   ) {
     return pw.TableRow(
       children: [
+        // 1. Left Label (e.g., PhoneNo. / Code)
         _cell(enFont, enL, fontSize: 7),
-        _cell(enFont, val, fontSize: 7, align: pw.TextAlign.center),
-        _cell(arFont, arL, fontSize: 7, align: pw.TextAlign.right),
-        _cell(enFont, enL2, fontSize: 7),
-        _cell(enFont, val2, fontSize: 7, align: pw.TextAlign.center),
+        
+        // 2. Middle Section: A nested table to create the split boxes
+        pw.Table(
+          border: const pw.TableBorder(
+            verticalInside: pw.BorderSide(width: 0.5),
+          ),
+          columnWidths: {
+            0: const pw.FlexColumnWidth(),   // Value 1
+            1: const pw.FixedColumnWidth(45), // Arabic Label (Middle)
+            2: const pw.FixedColumnWidth(45), // English Label (Middle)
+            3: const pw.FlexColumnWidth(),   // Value 2
+          },
+          children: [
+            pw.TableRow(
+              children: [
+                _cell(enFont, val, fontSize: 7, align: pw.TextAlign.center),
+                _cell(arFont, arL, fontSize: 7, align: pw.TextAlign.center),
+                _cell(enFont, enL2, fontSize: 7, align: pw.TextAlign.center),
+                _cell(enFont, val2, fontSize: 7, align: pw.TextAlign.center),
+              ],
+            ),
+          ],
+        ),
+        
+        // 3. Right Label (e.g., Arabic descriptors)
         _cell(arFont, arL2, fontSize: 7, align: pw.TextAlign.right),
       ],
     );
   }
+
+
+  
 
   // static pw.TableRow _totalRow(
   //   pw.Font font,

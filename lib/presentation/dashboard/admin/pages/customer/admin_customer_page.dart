@@ -44,9 +44,35 @@ class AdminCustomerPage extends HookConsumerWidget {
     final area = useState(customer?.area ?? "");
 
     //new
-    final selectedSalesperson = useState<Salesman?>(null);
+final selectedSalesperson = useState<Salesman?>(null);
+final salespersonController = useTextEditingController();
+
+
     final salesmenState = ref.watch(salesmanNotifierProvider);
 final salesmen = salesmenState.salesmen;
+
+useEffect(() {
+  if (!isEditMode) return null;
+  if (customer?.salespersonId == null) return null;
+  if (salesmen.isEmpty) return null; // wait for data
+
+  final matches =
+      salesmen.where((s) => s.id == customer!.salespersonId).toList();
+
+  if (matches.isEmpty) {
+    // IMPORTANT:
+    // This means the salesperson was deleted or inactive.
+    // We DO NOTHING. No auto-selection. No forging.
+    return null;
+  }
+
+  // selectedSalesperson.value = matches.first;
+  final salesperson = matches.first;
+selectedSalesperson.value = salesperson;
+salespersonController.text = salesperson.username;
+
+  return null;
+}, [salesmen]);
 
 
 
@@ -236,7 +262,7 @@ Container(
       onFieldSubmitted,
     ) {
       return TextField(
-        controller: controller,
+        controller: salespersonController,
         focusNode: focusNode,
         decoration: const InputDecoration(
           hintText: "Search salesperson",
