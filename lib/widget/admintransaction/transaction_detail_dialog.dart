@@ -34,6 +34,15 @@ class TransactionDetailsDialog extends HookConsumerWidget {
 //     final settingsState = ref.watch(settingsNotifierProvider);
 // final companySettings = settingsState.settings!;
 
+
+  // 🔒 DEFENSIVE LOAD: ensure settings exist when dialog opens
+  useEffect(() {
+    Future.microtask(() {
+      ref.read(settingsNotifierProvider.notifier).loadOnce();
+    });
+    return null;
+  }, []);
+
 final settingsState = ref.watch(settingsNotifierProvider);
 
 if (settingsState.isLoading || settingsState.settings == null) {
