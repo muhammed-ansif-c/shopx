@@ -4,6 +4,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:shopx/application/dashboard/admin_dashboard_notifier.dart';
+import 'package:shopx/application/dashboard/admin_dashboard_state.dart';
 import 'package:shopx/core/constants.dart';
 import 'package:shopx/presentation/dashboard/admin/admin_side_nav.dart';
 
@@ -33,7 +34,18 @@ class AdminDashboard extends HookConsumerWidget {
       );
     }
 
-    final weekly = dashboard.weeklySummary;
+    final chartData = dashboard.salesChart;
+    final isDailyChart = dashboard.chartPeriod == SalesChartPeriod.daily;
+
+    double maxY = chartData.isEmpty
+        ? 100
+        : chartData
+                  .map((e) => e["revenue"] as num)
+                  .reduce((a, b) => a > b ? a : b)
+                  .toDouble() *
+              1.2;
+
+    // final weekly = dashboard.weeklySummary;
 
     // final totalRevenue = dashboard.netSales;
     // final totalSales = dashboard.totalSales; // Total Sales (count)
@@ -178,14 +190,207 @@ class AdminDashboard extends HookConsumerWidget {
 
               const SizedBox(height: 24),
 
-              // --- WEEKLY SUMMARY CHART ---
-              _WeeklySummarySection(
-                weekly: dashboard.weeklySummary,
-                grossRevenue:
-                    dashboard.totals.all.revenue, // show NET as revenue
-                netSales: dashboard.totals.all.revenue,
-                totalDiscount: dashboard.totalDiscount,
+              // // --- WEEKLY SUMMARY CHART ---
+              // _WeeklySummarySection(
+              //   weekly: dashboard.weeklySummary,
+              //   grossRevenue:
+              //       dashboard.totals.all.revenue, // show NET as revenue
+              //   netSales: dashboard.totals.all.revenue,
+              //   totalDiscount: dashboard.totalDiscount,
+              // ),
+
+              // 🔽 SALES CHART FILTER
+              DropdownButton<SalesChartPeriod>(
+                value: dashboard.chartPeriod,
+                items: const [
+                  DropdownMenuItem(
+                    value: SalesChartPeriod.daily,
+                    child: Text("Daily"),
+                  ),
+                  DropdownMenuItem(
+                    value: SalesChartPeriod.weekly,
+                    child: Text("Weekly"),
+                  ),
+                  DropdownMenuItem(
+                    value: SalesChartPeriod.monthly,
+                    child: Text("Monthly"),
+                  ),
+                ],
+                onChanged: (value) {
+                  if (value != null) {
+                    ref
+                        .read(adminDashboardNotifierProvider.notifier)
+                        .changeSalesChartPeriod(value);
+                  }
+                },
               ),
+
+              const SizedBox(height: 12),
+
+              // 📊 SALES CHART
+              // ================= DAILY SCOREBOARD =================
+              if (isDailyChart)
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "Today's Revenue",
+                            style: GoogleFonts.poppins(
+                              fontSize: 12,
+                              color: Colors.grey,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            "SAR ${dashboard.totals.today.revenue.toStringAsFixed(2)}",
+                            style: GoogleFonts.poppins(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      Row(
+                        children: [
+                          Icon(
+                            dashboard.todayChange.direction == "up"
+                                ? Icons.arrow_upward
+                                : dashboard.todayChange.direction == "down"
+                                ? Icons.arrow_downward
+                                : Icons.remove,
+                            color: dashboard.todayChange.direction == "up"
+                                ? Colors.green
+                                : dashboard.todayChange.direction == "down"
+                                ? Colors.red
+                                : Colors.grey,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            "${dashboard.todayChange.revenuePercent}%",
+                            style: GoogleFonts.poppins(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: dashboard.todayChange.direction == "up"
+                                  ? Colors.green
+                                  : dashboard.todayChange.direction == "down"
+                                  ? Colors.red
+                                  : Colors.grey,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                )
+              // ================= WEEKLY / MONTHLY CHART =================
+              else
+                SizedBox(
+                  height: 240,
+                  child: dashboard.loading
+                      ? const Center(child: CircularProgressIndicator())
+                      : LineChart(
+                          LineChartData(
+                            minY: 0,
+                            maxY: maxY,
+                            gridData: FlGridData(show: false),
+                            borderData: FlBorderData(show: false),
+                            titlesData: FlTitlesData(
+                              topTitles: AxisTitles(
+                                sideTitles: SideTitles(showTitles: false),
+                              ),
+                              rightTitles: AxisTitles(
+                                sideTitles: SideTitles(showTitles: false),
+                              ),
+                              leftTitles: AxisTitles(
+                                sideTitles: SideTitles(
+                                  showTitles: true,
+                                  reservedSize: 36,
+                                  getTitlesWidget: (value, _) => Text(
+                                    value.toInt().toString(),
+                                    style: const TextStyle(fontSize: 10),
+                                  ),
+                                ),
+                              ),
+
+                              bottomTitles: AxisTitles(
+                                sideTitles: SideTitles(
+                                  showTitles: true,
+                                  interval: 1,
+
+                                  getTitlesWidget: (value, _) {
+                                    // ⭐ BLOCK FRACTIONAL TICKS
+                                    if (value % 1 != 0) return const SizedBox();
+
+                                    final index = value.toInt();
+                                    if (index < 0 ||
+                                        index >= chartData.length) {
+                                      return const SizedBox();
+                                    }
+
+                                    return Padding(
+                                      padding: const EdgeInsets.only(top: 8),
+                                      child: Text(
+                                        chartData[index]["label"],
+                                        style: const TextStyle(fontSize: 10),
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ),
+                            ),
+                            lineBarsData: [
+                              LineChartBarData(
+                                isCurved: true,
+                                barWidth: 2,
+                                color: kPrimaryBlue,
+
+                                spots: chartData
+                                    .asMap()
+                                    .entries
+                                    .where((e) => e.value["revenue"] != null)
+                                    .map((e) {
+                                      return FlSpot(
+                                        e.key.toDouble(),
+                                        (e.value["revenue"] as num).toDouble(),
+                                      );
+                                    })
+                                    .toList(),
+
+                                dotData: FlDotData(show: false),
+                                belowBarData: BarAreaData(
+                                  show: true,
+                                  gradient: LinearGradient(
+                                    colors: [
+                                      kPrimaryBlue.withOpacity(0.3),
+                                      Colors.transparent,
+                                    ],
+                                    begin: Alignment.topCenter,
+                                    end: Alignment.bottomCenter,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                ),
 
               const SizedBox(height: 24),
 
@@ -278,234 +483,230 @@ class _MetricCard extends StatelessWidget {
 // 🧩 SUB-WIDGET: WEEKLY SUMMARY CHART
 // =============================================================================
 
-class _WeeklySummarySection extends StatelessWidget {
-  final List<dynamic> weekly;
-  final num grossRevenue;
-  final num netSales;
-  final num totalDiscount;
+// class _WeeklySummarySection extends StatelessWidget {
+//   final List<dynamic> weekly;
+//   final num grossRevenue;
+//   final num netSales;
+//   final num totalDiscount;
 
-  const _WeeklySummarySection({
-    required this.weekly,
-    required this.grossRevenue,
-    required this.netSales,
-    required this.totalDiscount,
-  });
+//   const _WeeklySummarySection({
+//     required this.weekly,
+//     required this.grossRevenue,
+//     required this.netSales,
+//     required this.totalDiscount,
+//   });
 
-  @override
-  Widget build(BuildContext context) {
-    // 1️⃣ Compute maximum revenue dynamically
-    double maxRevenue = 0;
+//   @override
+//   Widget build(BuildContext context) {
+//     // 1️⃣ Compute maximum revenue dynamically
+//     double maxRevenue = 0;
 
-    for (final row in weekly) {
-      final value = double.tryParse(row["revenue"].toString()) ?? 0;
-      if (value > maxRevenue) maxRevenue = value;
-    }
+//     for (final row in weekly) {
+//       final value = double.tryParse(row["revenue"].toString()) ?? 0;
+//       if (value > maxRevenue) maxRevenue = value;
+//     }
 
-    // 2️⃣ Add padding so chart never touches the box border
-    double maxYValue = maxRevenue == 0 ? 100 : maxRevenue * 1.2;
+//     // 2️⃣ Add padding so chart never touches the box border
+//     double maxYValue = maxRevenue == 0 ? 100 : maxRevenue * 1.2;
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                "Weekly Summary",
-                style: GoogleFonts.poppins(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: const Color(0xFF1D1D1D),
-                ),
-              ),
-              const Icon(Icons.chevron_right, size: 20, color: Colors.grey),
-            ],
-          ),
-          kHeight20,
+//     return Container(
+//       padding: const EdgeInsets.all(16),
+//       decoration: BoxDecoration(
+//         color: Colors.white,
+//         borderRadius: BorderRadius.circular(12),
+//         boxShadow: [
+//           BoxShadow(
+//             color: Colors.black.withOpacity(0.05),
+//             blurRadius: 10,
+//             offset: const Offset(0, 4),
+//           ),
+//         ],
+//       ),
+//       child: Column(
+//         crossAxisAlignment: CrossAxisAlignment.start,
+//         children: [
+//           // Header
+//           Row(
+//             mainAxisAlignment: MainAxisAlignment.spaceBetween,
+//             children: [
+//               Text(
+//                 "Weekly Summary",
+//                 style: GoogleFonts.poppins(
+//                   fontSize: 14,
+//                   fontWeight: FontWeight.bold,
+//                   color: const Color(0xFF1D1D1D),
+//                 ),
+//               ),
+//               const Icon(Icons.chevron_right, size: 20, color: Colors.grey),
+//             ],
+//           ),
+//           kHeight20,
 
-          // Chart
-          SizedBox(
-            height: 180,
-            child: LineChart(
-              LineChartData(
-                gridData: FlGridData(show: false),
-                titlesData: FlTitlesData(
-                  show: true,
-                  topTitles: AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
-                  rightTitles: AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
-                  leftTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      reservedSize: 30,
-                      interval: maxYValue / 4, // ⭐ FIXED
-                      getTitlesWidget: (val, meta) {
-                        return Text(
-                          val.toInt().toString(),
-                          style: const TextStyle(
-                            fontSize: 10,
-                            color: Colors.grey,
-                          ),
-                        );
-                      },
-                    ),
-                  ),
+//           // Chart
+//           SizedBox(
+//             height: 180,
+//             child: LineChart(
+//               LineChartData(
+//                 gridData: FlGridData(show: false),
+//                 titlesData: FlTitlesData(
+//                   show: true,
+//                   topTitles: AxisTitles(
+//                     sideTitles: SideTitles(showTitles: false),
+//                   ),
+//                   rightTitles: AxisTitles(
+//                     sideTitles: SideTitles(showTitles: false),
+//                   ),
+//                   leftTitles: AxisTitles(
+//                     sideTitles: SideTitles(
+//                       showTitles: true,
+//                       reservedSize: 30,
+//                       interval: maxYValue / 4, // ⭐ FIXED
+//                       getTitlesWidget: (val, meta) {
+//                         return Text(
+//                           val.toInt().toString(),
+//                           style: const TextStyle(
+//                             fontSize: 10,
+//                             color: Colors.grey,
+//                           ),
+//                         );
+//                       },
+//                     ),
+//                   ),
 
-                  bottomTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      getTitlesWidget: (value, meta) {
-                        const days = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
-                        if (value.toInt() >= 0 && value.toInt() < days.length) {
-                          return Padding(
-                            padding: const EdgeInsets.only(top: 8.0),
-                            child: Text(
-                              days[value.toInt()],
-                              style: GoogleFonts.poppins(
-                                fontSize: 12,
-                                color: Colors.grey,
-                              ),
-                            ),
-                          );
-                        }
-                        return const SizedBox();
-                      },
-                    ),
-                  ),
-                ),
-                borderData: FlBorderData(show: false),
-                minX: 0,
-                maxX: 6,
-                minY: 0,
-                maxY: maxYValue,
-                lineBarsData: [
-                  LineChartBarData(
-                    spots: weekly.asMap().entries.map((e) {
-                      final index = e.key;
-                      final row = e.value;
+//                   bottomTitles: AxisTitles(
+//                     sideTitles: SideTitles(
+//                       showTitles: true,
+//                       getTitlesWidget: (value, meta) {
+//                         const days = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+//                         if (value.toInt() >= 0 && value.toInt() < days.length) {
+//                           return Padding(
+//                             padding: const EdgeInsets.only(top: 8.0),
+//                             child: Text(
+//                               days[value.toInt()],
+//                               style: GoogleFonts.poppins(
+//                                 fontSize: 12,
+//                                 color: Colors.grey,
+//                               ),
+//                             ),
+//                           );
+//                         }
+//                         return const SizedBox();
+//                       },
+//                     ),
+//                   ),
+//                 ),
+//                 borderData: FlBorderData(show: false),
+//                 minX: 0,
+//                 maxX: 6,
+//                 minY: 0,
+//                 maxY: maxYValue,
+//                 lineBarsData: [
+//                   LineChartBarData(
+//                     spots: weekly.asMap().entries.map((e) {
+//                       final index = e.key;
+//                       final row = e.value;
 
-                      final revenue =
-                          double.tryParse(row["revenue"].toString()) ?? 0.7;
+//                       final revenue =
+//                           double.tryParse(row["revenue"].toString()) ?? 0.7;
 
-                      return FlSpot(index.toDouble(), revenue);
-                    }).toList(),
+//                       return FlSpot(index.toDouble(), revenue);
+//                     }).toList(),
 
-                    isCurved: true,
-                    color: const Color(0xFF1E75D5),
-                    barWidth: 2,
-                    dotData: FlDotData(
-                      show: true,
-                      checkToShowDot: (spot, barData) =>
-                          spot.x == 2, // Only show dot on peak
-                    ),
-                    belowBarData: BarAreaData(
-                      show: true,
-                      gradient: LinearGradient(
-                        colors: [
-                          const Color(0xFF1E75D5).withOpacity(0.3),
-                          Colors.white.withOpacity(0.0),
-                        ],
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                      ),
-                    ),
-                  ),
-                ],
-                // Tooltip setup to match image (Simplified static look)
-                lineTouchData: LineTouchData(
-                  enabled: true,
-                  touchTooltipData: LineTouchTooltipData(
-                    getTooltipColor: (spot) => const Color(0xFFE3F2FD),
-                    getTooltipItems: (touchedSpots) {
-                      return touchedSpots.map((LineBarSpot touchedSpot) {
-                        return LineTooltipItem(
-                          '112 Transaction',
-                          GoogleFonts.poppins(
-                            color: const Color(0xFF1E75D5),
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        );
-                      }).toList();
-                    },
-                  ),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 20),
+//                     isCurved: true,
+//                     color: const Color(0xFF1E75D5),
+//                     barWidth: 2,
+//                     dotData: FlDotData(
+//                       show: true,
+//                       checkToShowDot: (spot, barData) =>
+//                           spot.x == 2, // Only show dot on peak
+//                     ),
+//                     belowBarData: BarAreaData(
+//                       show: true,
+//                       gradient: LinearGradient(
+//                         colors: [
+//                           const Color(0xFF1E75D5).withOpacity(0.3),
+//                           Colors.white.withOpacity(0.0),
+//                         ],
+//                         begin: Alignment.topCenter,
+//                         end: Alignment.bottomCenter,
+//                       ),
+//                     ),
+//                   ),
+//                 ],
+//                 // Tooltip setup to match image (Simplified static look)
+//                 lineTouchData: LineTouchData(
+//                   enabled: true,
+//                   touchTooltipData: LineTouchTooltipData(
+//                     getTooltipColor: (spot) => const Color(0xFFE3F2FD),
+//                     getTooltipItems: (touchedSpots) {
+//                       return touchedSpots.map((LineBarSpot touchedSpot) {
+//                         return LineTooltipItem(
+//                           '112 Transaction',
+//                           GoogleFonts.poppins(
+//                             color: const Color(0xFF1E75D5),
+//                             fontSize: 12,
+//                             fontWeight: FontWeight.w600,
+//                           ),
+//                         );
+//                       }).toList();
+//                     },
+//                   ),
+//                 ),
+//               ),
+//             ),
+//           ),
+//           const SizedBox(height: 20),
 
-          // Stats Row
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              // _buildSummaryStat(
-              //   "Gross Revenue",
-              //   "\$${grossRevenue.toStringAsFixed(2)}",
-              // ),
-              _buildSummaryStat(
-                "Gross Revenue",
-                "SAR ${grossRevenue.toStringAsFixed(2)}",
-              ),
+//           // Stats Row
+//           Row(
+//             mainAxisAlignment: MainAxisAlignment.spaceBetween,
+//             children: [
+//               // _buildSummaryStat(
+//               //   "Gross Revenue",
+//               //   "\$${grossRevenue.toStringAsFixed(2)}",
+//               // ),
+//               _buildSummaryStat(
+//                 "Gross Revenue",
+//                 "SAR ${grossRevenue.toStringAsFixed(2)}",
+//               ),
 
-              // _buildSummaryStat("Net sales", "$netSales"),
-              _buildSummaryStat(
-                "Net sales",
-                "SAR ${netSales.toStringAsFixed(2)}",
-              ),
+//               // _buildSummaryStat("Net sales", "$netSales"),
+//               _buildSummaryStat(
+//                 "Net sales",
+//                 "SAR ${netSales.toStringAsFixed(2)}",
+//               ),
 
-              // _buildSummaryStat(
-              //   "Discount",
-              //   "\$${totalDiscount.toStringAsFixed(2)}",
-              // ),
-              _buildSummaryStat(
-                "Discount",
-                "SAR ${totalDiscount.toStringAsFixed(2)}",
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
+//               // _buildSummaryStat(
+//               //   "Discount",
+//               //   "\$${totalDiscount.toStringAsFixed(2)}",
+//               // ),
+//               _buildSummaryStat(
+//                 "Discount",
+//                 "SAR ${totalDiscount.toStringAsFixed(2)}",
+//               ),
+//             ],
+//           ),
+//         ],
+//       ),
+//     );
+//   }
 
-  Widget _buildSummaryStat(String label, String value) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: GoogleFonts.poppins(fontSize: 10, color: Colors.grey),
+Widget _buildSummaryStat(String label, String value) {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(label, style: GoogleFonts.poppins(fontSize: 10, color: Colors.grey)),
+      const SizedBox(height: 4),
+      Text(
+        value,
+        style: GoogleFonts.poppins(
+          fontSize: 14,
+          fontWeight: FontWeight.bold,
+          color: const Color(0xFF1D1D1D),
         ),
-        const SizedBox(height: 4),
-        Text(
-          value,
-          style: GoogleFonts.poppins(
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
-            color: const Color(0xFF1D1D1D),
-          ),
-        ),
-      ],
-    );
-  }
+      ),
+    ],
+  );
 }
 
 // =============================================================================
@@ -683,4 +884,6 @@ class _TransactionItem extends StatelessWidget {
       ),
     );
   }
+
+  //new
 }

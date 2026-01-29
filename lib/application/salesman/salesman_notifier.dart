@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shopx/application/salesman/salesman_state.dart';
 import 'package:shopx/domain/salesman/salesman.dart';
@@ -15,21 +16,72 @@ class SalesmanNotifier extends Notifier<SalesmanState> {
   }
 
   // CREATE
- Future<void> createSalesman(Salesman salesman) async {
-  state = state.copyWith(isLoading: true, error: null, success: false);
+  //   Future<void> createSalesman(Salesman salesman) async {
+  //     state = state.copyWith(isLoading: true, error: null, success: false);
+
+  //     try {
+  //       final created = await ref
+  //           .read(salesmanRepositoryProvider)
+  //           .createSalesman(salesman);
+
+  //       state = state.copyWith(
+  //         isLoading: false,
+  //         success: true,
+  //         salesmen: [...state.salesmen, created], // 🔥 append new item
+  //       );
+
+  //     } catch (e) {
+  //   String errorMessage = "Something went wrong";
+
+  //   if (e is DioException) {
+  //     final data = e.response?.data;
+
+  //     // ✅ CASE 1: Backend sends JSON
+  //     if (data is Map && data["message"] != null) {
+  //       errorMessage = data["message"].toString();
+  //     }
+
+  //     // ✅ CASE 2: Flutter Web sends plain string
+  //     else if (data is String) {
+  //       errorMessage = data;
+  //     }
+  //   }
+
+  //   state = state.copyWith(
+  //     isLoading: false,
+  //     error: errorMessage,
+  //     success: false,
+  //   );
+  // }
+
+  //   }
+
+Future<void> createSalesman(Salesman salesman) async {
+  // Start loading
+  state = state.copyWith(isLoading: true, error: null);
 
   try {
-    final created = await ref.read(salesmanRepositoryProvider).createSalesman(salesman);
+    final created = await ref
+        .read(salesmanRepositoryProvider)
+        .createSalesman(salesman);
 
+    // ✅ SUCCESS: update list immediately
     state = state.copyWith(
       isLoading: false,
-      success: true,
-      salesmen: [...state.salesmen, created], // 🔥 append new item
+      salesmen: [...state.salesmen, created],
     );
   } catch (e) {
-    state = state.copyWith(isLoading: false, error: e.toString());
+    // ✅ FAILURE: ALWAYS clear loading
+    state = state.copyWith(
+      isLoading: false,
+      error: e.toString().replaceFirst('Exception: ', ''),
+    );
+
+    rethrow; // keeps your snackbar logic working
   }
 }
+
+
 
 
   // GET ALL
@@ -49,52 +101,50 @@ class SalesmanNotifier extends Notifier<SalesmanState> {
     return await ref.read(salesmanRepositoryProvider).getSalesmanById(id);
   }
 
+  // UPDATE
+  Future<void> updateSalesman(int id, Salesman salesman) async {
+    state = state.copyWith(isLoading: true, error: null, success: false);
 
+    try {
+      final updated = await ref
+          .read(salesmanRepositoryProvider)
+          .updateSalesman(id, salesman);
 
- // UPDATE
-Future<void> updateSalesman(int id, Salesman salesman) async {
-  state = state.copyWith(isLoading: true, error: null, success: false);
+      // 🔥 Update UI instantly by replacing the old salesman
+      final updatedList = state.salesmen.map((s) {
+        return s.id == id ? updated : s;
+      }).toList();
 
-  try {
-    final updated = await ref.read(salesmanRepositoryProvider).updateSalesman(id, salesman);
-
-    // 🔥 Update UI instantly by replacing the old salesman
-    final updatedList = state.salesmen.map((s) {
-      return s.id == id ? updated : s;
-    }).toList();
-
-    state = state.copyWith(
-      isLoading: false,
-      success: true,
-      salesmen: updatedList,
-    );
-
-  } catch (e) {
-    state = state.copyWith(isLoading: false, error: e.toString());
+      state = state.copyWith(
+        isLoading: false,
+        success: true,
+        salesmen: updatedList,
+      );
+    } catch (e) {
+      state = state.copyWith(isLoading: false, error: e.toString());
+    }
   }
-}
-
 
   // DELETE
   Future<void> deleteSalesman(int id) async {
-  state = state.copyWith(isLoading: true, error: null, success: false);
+    state = state.copyWith(isLoading: true, error: null, success: false);
 
-  try {
-    await ref.read(salesmanRepositoryProvider).deleteSalesman(id);
+    try {
+      await ref.read(salesmanRepositoryProvider).deleteSalesman(id);
 
-    final updatedList =
-        state.salesmen.where((s) => s.id != id).toList(); // 🔥 remove item
+      final updatedList = state.salesmen
+          .where((s) => s.id != id)
+          .toList(); // 🔥 remove item
 
-    state = state.copyWith(
-      isLoading: false,
-      success: true,
-      salesmen: updatedList,
-    );
-  } catch (e) {
-    state = state.copyWith(isLoading: false, error: e.toString());
+      state = state.copyWith(
+        isLoading: false,
+        success: true,
+        salesmen: updatedList,
+      );
+    } catch (e) {
+      state = state.copyWith(isLoading: false, error: e.toString());
+    }
   }
-}
-
 }
 
 final salesmanNotifierProvider =

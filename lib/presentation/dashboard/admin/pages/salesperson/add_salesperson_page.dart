@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:shopx/application/salesman/salesman_notifier.dart';
+import 'package:shopx/application/salesman/salesman_state.dart';
 import 'package:shopx/core/constants.dart';
 import 'package:shopx/domain/salesman/salesman.dart';
 
@@ -13,6 +14,18 @@ class AddSalespersonPage extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+
+    ref.listen<SalesmanState>(salesmanNotifierProvider, (prev, next) {
+  if (next.error != null && next.error!.isNotEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(next.error!),
+        backgroundColor: Colors.red,
+      ),
+    );
+  }
+});
+
     // -------------------------------------------------------------------------
     // 1. FORM CONTROLLERS (Hooks)
     // -------------------------------------------------------------------------
@@ -49,7 +62,7 @@ class AddSalespersonPage extends HookConsumerWidget {
     // 3. LOGIC HANDLERS
     // -------------------------------------------------------------------------
 
-    void handleSubmit() {
+    Future<void> handleSubmit() async {
       final name = nameController.text.trim();
       final email = emailController.text.trim();
       final phone = phoneController.text.trim();
@@ -103,17 +116,50 @@ class AddSalespersonPage extends HookConsumerWidget {
       );
 
       // ---------------- SUBMIT ----------------
-      if (isEditMode) {
-        ref
-            .read(salesmanNotifierProvider.notifier)
-            .updateSalesman(salesman!.id!, newSalesmanData);
-      } else {
-        ref
-            .read(salesmanNotifierProvider.notifier)
-            .createSalesman(newSalesmanData);
-      }
+      //   if (isEditMode) {
+      //    await ref
+      //         .read(salesmanNotifierProvider.notifier)
+      //         .updateSalesman(salesman!.id!, newSalesmanData);
+      //   } else {
+      //   await  ref
+      //         .read(salesmanNotifierProvider.notifier)
+      //         .createSalesman(newSalesmanData);
+      //   }
 
-      Navigator.pop(context);
+      //   Navigator.pop(context);
+      // }
+try {
+  if (isEditMode) {
+    await ref
+        .read(salesmanNotifierProvider.notifier)
+        .updateSalesman(salesman!.id!, newSalesmanData);
+  } else {
+    await ref
+        .read(salesmanNotifierProvider.notifier)
+        .createSalesman(newSalesmanData);
+  }
+
+  Navigator.pop(context); // ✅ success only
+} on Exception catch (e) {
+  String message;
+
+  final error = e.toString();
+
+  if (error.contains("USER_ALREADY_EXISTS")) {
+    message = "User already exists";
+  } else {
+    message = "Something went wrong. Please try again.";
+  }
+
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text(message),
+      backgroundColor: Colors.red,
+    ),
+  );
+}
+
+
     }
 
     void handleDelete() {
@@ -302,15 +348,15 @@ class AddSalespersonPage extends HookConsumerWidget {
       ),
     );
   }
-Widget _buildTextField(
-  TextEditingController controller,
-  String hint, {
-  bool isPassword = false,
-  bool isPhone = false, // ⭐ ADD THIS
-  TextInputType keyboardType = TextInputType.text,
-  String? errorMessage,
-})
- {
+
+  Widget _buildTextField(
+    TextEditingController controller,
+    String hint, {
+    bool isPassword = false,
+    bool isPhone = false, // ⭐ ADD THIS
+    TextInputType keyboardType = TextInputType.text,
+    String? errorMessage,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -323,30 +369,27 @@ Widget _buildTextField(
               width: 1.5,
             ),
           ),
-          child: 
-          
-       TextField(
-  controller: controller,
-  obscureText: isPassword,
-  keyboardType: keyboardType,
-  inputFormatters: isPhone
-      ? [
-          FilteringTextInputFormatter.digitsOnly,
-          LengthLimitingTextInputFormatter(10),
-        ]
-      : null, // ⭐ KEY FIX
-  style: const TextStyle(fontSize: 14, color: Colors.black87),
-  decoration: InputDecoration(
-    hintText: hint,
-    hintStyle: const TextStyle(color: Colors.grey, fontSize: 13),
-    border: InputBorder.none,
-    contentPadding: const EdgeInsets.symmetric(
-      horizontal: 16,
-      vertical: 14,
-    ),
-  ),
-)
-
+          child: TextField(
+            controller: controller,
+            obscureText: isPassword,
+            keyboardType: keyboardType,
+            inputFormatters: isPhone
+                ? [
+                    FilteringTextInputFormatter.digitsOnly,
+                    LengthLimitingTextInputFormatter(10),
+                  ]
+                : null, // ⭐ KEY FIX
+            style: const TextStyle(fontSize: 14, color: Colors.black87),
+            decoration: InputDecoration(
+              hintText: hint,
+              hintStyle: const TextStyle(color: Colors.grey, fontSize: 13),
+              border: InputBorder.none,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 14,
+              ),
+            ),
+          ),
         ),
 
         if (errorMessage != null)
