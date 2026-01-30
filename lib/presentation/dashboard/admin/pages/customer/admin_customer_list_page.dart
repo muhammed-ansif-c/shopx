@@ -199,65 +199,35 @@ if (result.filterType == CustomerFilterType.area) {
 
           // List Content
 
-
-          // Expanded(
-          //   child: customerState.isLoading && customerState.customers.isEmpty
-          //       ? const Center(child: CircularProgressIndicator())
-          //       : customerState.customers.isEmpty
-          //       ? const Center(child: Text("No customers found"))
-          //       : ListView.builder(
-          //           padding: const EdgeInsets.symmetric(
-          //             horizontal: 16,
-          //             vertical: 10,
-          //           ),
-          //           itemCount: filteredCustomers.length,
-          //           itemBuilder: (context, index) {
-          //             final customer = filteredCustomers[index];
-
-          //             final isExpanded =
-          //                 expandedCustomerId.value == customer.id;
-
-          //             return _buildCustomerCard(
-          //               context,
-          //               ref,
-          //               customer,
-          //               isExpanded,
-          //               expandedCustomerId,
-          //               // salespersonMap,
-          //             );
-          //           },
-          //         ),
-          // ),
-
-
+          
           Expanded(
-  child: customerState.isLoading
-      ? const Center(child: CircularProgressIndicator())
-      : filteredCustomers.isEmpty
-          ? const Center(child: Text("No customers found"))
-          : ListView.builder(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 10,
-              ),
-              itemCount: filteredCustomers.length,
-              itemBuilder: (context, index) {
-                final customer = filteredCustomers[index];
+            child: customerState.isLoading && customerState.customers.isEmpty
+                ? const Center(child: CircularProgressIndicator())
+                : customerState.customers.isEmpty
+                ? const Center(child: Text("No customers found"))
+                : ListView.builder(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 10,
+                    ),
+                    itemCount: filteredCustomers.length,
+                    itemBuilder: (context, index) {
+                      final customer = filteredCustomers[index];
 
-                final isExpanded =
-                    expandedCustomerId.value == customer.id;
+                      final isExpanded =
+                          expandedCustomerId.value == customer.id;
 
-                return _buildCustomerCard(
-                  context,
-                  ref,
-                  customer,
-                  isExpanded,
-                  expandedCustomerId,
-                );
-              },
-            ),
-),
-
+                      return _buildCustomerCard(
+                        context,
+                        ref,
+                        customer,
+                        isExpanded,
+                        expandedCustomerId,
+                        // salespersonMap,
+                      );
+                    },
+                  ),
+          ),
 
           // Add New Customer Button
           Container(
