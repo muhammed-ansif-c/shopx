@@ -252,7 +252,8 @@ class PdfReceiptService {
                     'INV/${receipt.invoiceDate.year}/${receipt.invoiceNumber}',
                     'رقم الفاتورة',
                     'Address',
-                    receipt.customerAddress ?? '',
+                    // receipt.customerAddress ?? '',
+                  settings.companyAddressEn,
                     'عنوان المورد',
                   ),
                   _infoRow(
