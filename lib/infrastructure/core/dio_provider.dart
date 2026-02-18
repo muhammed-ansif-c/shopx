@@ -11,15 +11,14 @@ final dioProvider = Provider<Dio>((ref) {
       // baseUrl: "https://shopx-server-p9ov.onrender.com/api/",this is render
       //  baseUrl: "https://aba65707ae3f.ngrok-free.app/api/",
       // baseUrl: "http://16.112.120.235:5000/api/", // Aws
-
-      baseUrl: "https://001b-2409-40f3-1019-c5c7-c60-bda6-1280-fe35.ngrok-free.app/api/",
       // baseUrl: "http://sellops.cloud:5000/api/",
+      baseUrl:"http://52.66.146.243/api/",
 
       connectTimeout: Duration(seconds: 20),
       receiveTimeout: Duration(seconds: 20),
       headers: {
         "Content-Type": "application/json",
-         "ngrok-skip-browser-warning": "true",
+        //  "ngrok-skip-browser-warning": "true",
       },
     ),
   );
