@@ -423,7 +423,8 @@ class PdfReceiptService {
      '', // 'Sameer (Makkah)', // You can pass your dynamic data here
       'رقم العميل',
       'VAT. No',
-      settings.vatNumber,
+      // settings.vatNumber,
+       receipt.customerVat ?? '', 
       'الرقم الضريبي',
     ),
   ],
