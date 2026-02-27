@@ -15,23 +15,22 @@ class ProductPerformancePage extends HookConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final primaryBlue = const Color(0xFF1D72D6);
     final state = ref.watch(salesPerformanceNotifierProvider);
-useEffect(() {
-  Future.microtask(() async {
-    // 🔥 THIS WAS MISSING
-    await ref.read(salesmanNotifierProvider.notifier).fetchSalesmen();
+    useEffect(() {
+      Future.microtask(() async {
+        // 🔥 THIS WAS MISSING
+        await ref.read(salesmanNotifierProvider.notifier).fetchSalesmen();
 
-    // Load product performance
-    final notifier = ref.read(salesPerformanceNotifierProvider.notifier);
-    final s = ref.read(salesPerformanceNotifierProvider);
+        // Load product performance
+        final notifier = ref.read(salesPerformanceNotifierProvider.notifier);
+        final s = ref.read(salesPerformanceNotifierProvider);
 
-    notifier.loadAdminProductPerformance(
-      start: s.startDate,
-      end: s.endDate,
-    );
-  });
-  return null;
-}, []);
-
+        notifier.loadAdminProductPerformance(
+          start: s.startDate,
+          end: s.endDate,
+        );
+      });
+      return null;
+    }, []);
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -44,33 +43,27 @@ useEffect(() {
         ),
         title: Text(
           "Product Performance",
-          style: TextStyle(
-            color: primaryBlue,
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(color: primaryBlue, fontWeight: FontWeight.bold),
         ),
         actions: [
           TextButton.icon(
             onPressed: () async {
-
-
-
-
-              final result =
-    await showDialog<ProductPerformanceFilterResult>(
-  context: context,
-  barrierDismissible: true,
-  builder: (context) {
-    return Dialog(
-      insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 80),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: const ProductPerformanceFilterModal(),
-    );
-  },
-);
-
+              final result = await showDialog<ProductPerformanceFilterResult>(
+                context: context,
+                barrierDismissible: true,
+                builder: (context) {
+                  return Dialog(
+                    insetPadding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 80,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: const ProductPerformanceFilterModal(),
+                  );
+                },
+              );
 
               if (result != null) {
                 ref
@@ -83,14 +76,10 @@ useEffect(() {
               }
             },
 
-
             icon: Icon(Icons.tune, color: primaryBlue),
             label: Text(
               "Filter",
-              style: TextStyle(
-                color: primaryBlue,
-                fontWeight: FontWeight.w600,
-              ),
+              style: TextStyle(color: primaryBlue, fontWeight: FontWeight.w600),
             ),
           ),
           const SizedBox(width: 8),
@@ -103,12 +92,19 @@ useEffect(() {
   }
 
   Widget _buildList(SalesPerformanceState state) {
-    final products =
-        List<Map<String, dynamic>>.from(state.productSales["list"] ?? []);
+    final products = List<Map<String, dynamic>>.from(
+      state.productSales["list"] ?? [],
+    );
 
     if (products.isEmpty) {
       return const Center(child: Text("No product data available"));
     }
+
+    final currencyFormatter = NumberFormat.currency(
+      locale: 'en',
+      symbol: 'SAR ',
+      decimalDigits: 2,
+    );
 
     return ListView.builder(
       padding: const EdgeInsets.all(20),
@@ -137,32 +133,61 @@ useEffect(() {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Text(
+                    //   p["product_name"] ?? "",
+                    //   style: const TextStyle(
+                    //     fontSize: 16,
+                    //     fontWeight: FontWeight.bold,
+                    //   ),
+                    // ),
+
                     Text(
-                      p["product_name"] ?? "",
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+  p["product_name"] ?? "",
+  maxLines: 1,
+  overflow: TextOverflow.ellipsis,
+  style: const TextStyle(
+    fontSize: 16,
+    fontWeight: FontWeight.bold,
+  ),
+),
                     const SizedBox(height: 6),
                     Text(
                       "Units Sold: ${p["units_sold"]}",
-                      style: const TextStyle(
-                        fontSize: 13,
-                        color: Colors.grey,
-                      ),
+                      style: const TextStyle(fontSize: 13, color: Colors.grey),
                     ),
                   ],
                 ),
               ),
-              Text(
-                "SAR ${p["revenue"]}",
-                style: const TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF1D72D6),
-                ),
-              ),
+
+              // Text(
+              //   "SAR ${p["revenue"]}",
+              //   style: const TextStyle(
+              //     fontSize: 15,
+              //     fontWeight: FontWeight.bold,
+              //     color: Color(0xFF1D72D6),
+              //   ),
+              // ),
+              Align(
+  alignment: Alignment.centerRight,
+  child: Text(
+    currencyFormatter.format(
+      (p["revenue"] ?? 0).toDouble(),
+    ),
+    style: const TextStyle(
+      fontSize: 15,
+      fontWeight: FontWeight.bold,
+      color: Color(0xFF1D72D6),
+    ),
+  ),
+),
+              // Text(
+              //   currencyFormatter.format((p["revenue"] ?? 0).toDouble()),
+              //   style: const TextStyle(
+              //     fontSize: 15,
+              //     fontWeight: FontWeight.bold,
+              //     color: Color(0xFF1D72D6),
+              //   ),
+              // ),
             ],
           ),
         );
